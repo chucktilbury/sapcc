@@ -144,38 +144,57 @@ The idea is that all of the code that emits something for the compiler output wi
 
 ```
 # This is an example of a set of parser rules.
+%parser {
+  # The code defined in this block will be placed near the beginning of the
+  # generated code for the parser.
+  %code {
+    // This is C code that is copied without modifications to the output of
+    // the compiler generator.
+  }
 
-# This rule demonstrates a recursive list. The recursive element must be first
-# and left recursion is not supported.
-module {}
-  : module_element module {}
-  : module_element {}
-
-# This rule demonstrates that several different non-terminals can make a
-# rule.
-module_element {}
-  : namespace_definition {}
-  : class_definition {}
-  : include_definition {}
-
-# This rule demonstrates an indirectly recursive rule.
-namespace_definition {} 
-  : NAMESPACE SYMBOL OBRACE module CBRACE {}
-
-# This rule demonstrates that blank rules are not allowed.
-class_definition {}
-  : CLASS SYMBOL OPAREN SYMBOL CPAREN class_body {}
-  : CLASS SYMBOL OPAREN CPAREN class_body {}
-  : CLASS SYMBOL class_body {}
-
-# The scanner supports having multiple files open for inclusion.
-include_definition {}
-  : INCLUDE SYMBOL {}
-
-# This is left empty, but that is not correct syntax. Don't want to write a whole
-# grammar in this example.
-class_body {}
-  : ... {}
+  # This rule demonstrates a recursive list. The recursive element must be first
+  # and left recursion is not supported.
+  module {
+      // This is C code that is embedded in a function and is called when the
+      // non-terminal symbol is recognized by the generated parser.
+    }
+    : module_element module {
+      // This is C code that is embedded in a function and is called when this
+      // syntax tree node is traversed. The tokens that were recognized by the
+      // parser are available as variables. For example, the syntax tree node is
+      // available as $0. The module_element token data structure is available as
+      // $1, and the module is available as $2. (work on this)
+    }
+    : module_element {
+      // C code.
+    }
+  
+  # This rule demonstrates that several different non-terminals can make a
+  # rule.
+  module_element {}
+    : namespace_definition {}
+    : class_definition {}
+    : include_definition {}
+  
+  # This rule demonstrates an indirectly recursive rule.
+  namespace_definition {} 
+    : NAMESPACE SYMBOL OBRACE module CBRACE {}
+  
+  # This rule demonstrates that blank rules are not allowed.
+  class_definition {}
+    : CLASS SYMBOL OPAREN SYMBOL CPAREN class_body {}
+    : CLASS SYMBOL OPAREN CPAREN class_body {}
+    : CLASS SYMBOL class_body {}
+  
+  # The scanner supports having multiple files open for inclusion.
+  include_definition {}
+    : INCLUDE SYMBOL {}
+  
+  # This is left empty, but that is not correct syntax. Don't want to write a whole
+  # grammar in this example.
+  class_body {}
+    : ... {}
+}
 
 ```
 
