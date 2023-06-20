@@ -11,6 +11,8 @@ The syntax tree that is output is not an "abstract" syntax tree. All of the symb
 
 The input file consists of 3 parts. They are directives, parser, and scanner. These parts can be placed in separate files or all in the same file. The order of directives and sections is very flexible. The syntax of the files are also very flexible. In general, spaces are ignored.
 
+All memory allocations that happen are covered by the Bohem garbage collection library. No attempt is made to free any memory used, even if a particular set of library routines (such as strings or lists) have the routines present to free memory. The garbage collector makes those routines NOOPs. 
+
 Every function in the CC has a trace statement that can be activated using the verbosity directive.
 
 One extended goal is to use DOT notation (from Graphiz) to make balloon syntax drawings of the input that was submitted to the parser for analysis. That will be done after the parser generator is working reasonably well.
@@ -95,7 +97,7 @@ A character range is defined as a group of characters.
 - ``[a-z][0-9]+`` - Matches exactly one instance of a number prefixed with a single lower case character. For example, ``a012`` matches but ``a0a`` does not match. Also, ``a`` does not match and ``23`` does not match.
 - ``[a-zA-Z_][a-zA-Z0-9_]+`` Matches a nominal symbol name.
 
-### Scanner implementation
+### Scanner generator implementation
 The scanner is a hybrid state machine. The rules are translated to C functions. The functions are kept in an array and executed in turn. If there is a possible match when a character is read, then the rule has a weight value incremented. When there are no more possible matches, then the rule with the highest weight is chosen to return. Regular expressions are implemented as individual functions where the character range is matched according to the operator.  
 
 ### File stack
@@ -132,6 +134,23 @@ void consume_token();
 const Token* get_token();
 
 ```
+
+### Scanner errors
+This addresses error handling that is built into the generator and the generated code.
+
+#### Compile time errors
+Compile time is when the scanner specification is read and processed into the data structures that will be used for further processing. 
+
+- If an input file cannot be opened, as specified on the command line or using an ``%include`` directive, then a fatal error happens.
+  
+- Any part of a rule is malformed causes a compile time error. Error recovery is attempted by reading a few characters and then trying to synchronize on a rule. If that cannot be done, then the error becomes fatal.
+  
+#### Runtime errors
+Run time is when the generated scanner reads the user's input and performs the operatons that have been specified. 
+
+- An unknown character is encountered. A table is made by the scanner that identitifies all valid characters. If an input character that is not valid is encountered, then the scanner produces a non-fatal error. 
+
+- A token cannot be created from the input. This happens when the specification incorrectly specifies token, but the specification is syntatically correct. This is a fatal error because the scanner cannot continue when it happens.
 
 ## Parser Specification
 The parser is specified in one or more parser blocks. (see above) A parser block consists of one or more parser rules. A parser rule consists of a non-terminal symbol definition that is followed by one or more patterns. When there is more than one %parser directive encountered, they are simply concatenated in the order they are seen, as if they appeared in a single specification. One or more optional %code directives can be embedded within a parser specification and the code that they contain is concatenated and added to the beginning of the parser file.
@@ -251,5 +270,30 @@ non_terminal {
 
 ```
 
-### Parser implementation
+### Parser generator implementation
+The parser generator generates a recursive decent parser that outputs a simple syntax tree. It reads the specification that is created by the user and generates all of the functionality to read the parser's input, recognize the grammar, and output the tree. Also, the functions are generated that traverse the tree.
 
+The input file(s) define a scanner specification that separates the input terminal symbols into tokens, and a grammar that combines the tokens into groups that are used to create the syntax tree.
+
+First, the input file(s) are scanned and parsed into a data structure that represents the raw input. Then the data structure is traversed to output the code that implementes the actual parser and the other functionality. 
+
+If there are conflicts in the grammar, the first item encountered is taken to be correct. There is no real detection for conflicts, as it the normal case for recursive decent parsers.
+
+### Parser errors
+This addresses parser errors that are generated directly by the functionality.
+
+#### Compile time errors
+Compile time errors happen when the user's grammar definition is read into the system and the output code is emitted.
+
+- File errors are handled by the scanner.
+- If a rule or directive is malformed then a syntax error is generated. These errors are fatal. The file, line, and column are indicated to facilitate debugging.
+
+#### Run time errors
+Run time errors happen when the generated parser reads the user's input and attempts to generate the syntax tree from it.
+
+- When a combination of tokens read by the scanner cannot be matched to a rule, then a syntax error is generated. These internally generated syntax error have the general form of "expected a XXX but got a YYY". They include a file name, line number, and column number to facilitate fixing the problem. After a syntax error the parser attempts to re-synchronize with the input by ignoring some number of tokens and then waiting for some particular construct. This must be defined in the context of the user's context using the ``%syntax`` directive.
+
+- Note that semantic errors can only be detected by the user's code. This parser generator only attepmts to match the syntax to the grammar.
+
+
+  
