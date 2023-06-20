@@ -25,6 +25,7 @@ Simple As Possible Compiler Compiler
 
 ## Introduction
 [top](#sapcc)
+
 This is a simplified compiler compiler that has a similar function as Flex/YACC or Antlr, but greatly simplified. The goal is to create a scanner generator and a parser generator that has a very simple input syntax and good error handling. The output language is C. 
 
 What is intended by SAPCC is to have an input syntax that has very few features, but is still able to capture all constructs that are needed to create a full featured parser for a language compiler. Also, it creates output code that is readable by someone who is not very experienced with C. No doubt there are people who are reading this and question if C++ or some other object based language would be better, but I like C and it's completely adequate for this purpose. 
@@ -43,6 +44,7 @@ One extended goal is to use DOT notation (from Graphiz) to make balloon syntax d
 
 ## Directives 
 [top](#sapcc)
+
 A directive is an entry in the file that controls how the input is used and how the output is generated. All aspects of the input file are controled by directives. These directives apply to both the parser and the scanner generators.
 
 - ``%verbosity number`` - This controls how much status is output on the terminal as the input is parsed and the output is emitted. Valid values are a counting numbers from zero (0) for no output except for actual errors and fiffty (50) for almost every single action that the generator takes.
@@ -56,6 +58,7 @@ A directive is an entry in the file that controls how the input is used and how 
 
 ## Scanner Specification
 [top](#sapcc)
+
 The scanner is specified in one or more scanner blocks. (see above) A scanner block consists of one or more scanner rules. A scanner rule consists of an optional symbol, exactly one pattern, and a required code block. The code block is executed when then the pattern is recognized by the scanner driver. It can be used to do translations on the token that was read. One or more %code directives can be optionally embedded in the scanner section to facilitate this functionality. Rules are taken in the order they are received. Rule recogntion is "greedy" in the the longest match that is possible is the one that is taken. This implies that situations where more than one rule matches, the first one that is defined in the one that is taken to be true. For example, keywords may look like a symbol, but for the placement in the specification. This is due to the simplicity of the recognition algorithm. 
 
 ```
@@ -112,6 +115,7 @@ The scanner is specified in one or more scanner blocks. (see above) A scanner bl
 ```
 ### Regular expressions
 [top](#sapcc)
+
 A regular expression is a construct that is capable of matching a variable character set within limits. The expression and the literal strings have to be matched together to select the proper result to return. For this scanner, regular expressions are a simplified hybrid of other implementations and instead of compiling them into a virtual environment, they are emitted as functions. The expressions are represented as one or more character ranges with an optional operator. 
 
 - ``[]`` - A character range that matches exactly one character.
@@ -126,14 +130,17 @@ A character range is defined as a group of characters.
 
 ### Scanner generator implementation
 [top](#sapcc)
+
 The scanner is a hybrid state machine. The rules are translated to C functions. The functions are kept in an array and executed in turn. If there is a possible match when a character is read, then the rule has a weight value incremented. When there are no more possible matches, then the rule with the highest weight is chosen to return. Regular expressions are implemented as individual functions where the character range is matched according to the operator.  
 
 ### File stack
 [top](#sapcc)
+
 The file stack is the way that the scanner handles included files. When a file is opened as a result of an open_file() API call, the file information is pushed on a stack. All input is drawn from the top of the stack. When a file runs out, it is closed and popped from the stack and the input is drawn from the new top of stack. An ind of file notification is not returned until there is no more input to read from disk.
 
 ### Scanner tokens
 [top](#sapcc)
+
 The scanner token is the output of the scanner that the parser consumes. If the scanner fails to create a token data structure then the driver returns NULL. When the scanner finds the end of input, then it returns a dedicated token of the type END_OF_INPUT. Note that this does not mean end of file. When a file ends, it is automatically closed and popped from the file stack.
 
 The token data structure is as follows:
@@ -152,6 +159,7 @@ typedef struct {
 
 ### Scanner API
 [top](#sapcc)
+
 The scanner api is not intended to be used directly, but there is no reason that it cannot be done. The scanner API is intended to be used from the parser.
 
 ```C
@@ -168,10 +176,12 @@ const Token* get_token();
 
 ### Scanner errors
 [top](#sapcc)
+
 This addresses error handling that is built into the generator and the generated code.
 
 #### Compile time errors
 [top](#sapcc)
+
 Compile time is when the scanner specification is read and processed into the data structures that will be used for further processing. 
 
 - If an input file cannot be opened, as specified on the command line or using an ``%include`` directive, then a fatal error happens.
@@ -187,6 +197,7 @@ Run time is when the generated scanner reads the user's input and performs the o
 
 ## Parser Specification
 [top](#sapcc)
+
 The parser is specified in one or more parser blocks. (see above) A parser block consists of one or more parser rules. A parser rule consists of a non-terminal symbol definition that is followed by one or more patterns. When there is more than one %parser directive encountered, they are simply concatenated in the order they are seen, as if they appeared in a single specification. One or more optional %code directives can be embedded within a parser specification and the code that they contain is concatenated and added to the beginning of the parser file.
 
 This system implements a recursive decent parser that creates a syntax tree of the user's input. That is not the same as an abstract syntax tree (AST). An abstract tree has a lot of uninteresting data removed and does a better job of capturing the actual meaning of the user's input. This parser only attempts to capture the syntax of the user's input and validate that it matches the grammar. It does not have any logic to validate that the user's input is correct other than that. The person using the parser to create a language has to add the code to validate things like whether symbols are correct and such. That is done by adding callback information to the individual rules. There are 2 ways to do that.
@@ -255,6 +266,7 @@ The idea is that all of the code that emits something for the compiler output wi
 
 ## Rules
 [top](#sapcc)
+
 Parser rules are fairly flexible. There are a few caviats due to the simplicity of the system. 
 
 - Blank rules are not allowed.
@@ -263,10 +275,12 @@ Parser rules are fairly flexible. There are a few caviats due to the simplicity 
 
 ### Rule structure
 [top](#sapcc)
+
 The structure of rules is simple. The first item encountered must be the unique name of a non-terminal symbol. Following that, a code block is required. This may be empty, but code that is in the block will be appended to the function that builds the syntax tree. Next, there are one or more rule clauses. Each clause starts with a colon ':', that tells the system that this is a rule clause. The clause is a list of terminal and non-terminal symbols that specify the structure of the rule. Then another code block is present that may be blank. This code block is appended to the end of the function that traverses the syntax tree. The code in the code block can access the tokens in the rule clause using symbols similar to YACC where the symbol is a pointer to the actual token.
 
 ### Accessing data inside a rule clause
 [top](#sapcc)
+
 All of the data that is generated when a rule clause is recognized is available to the code that connects the rule clause to the user's code. All of the symbols access the syntax tree node data structure, which in turn contains everything that is known about the current non-terminal that is currently being recognized. Technically, every part of the data can be accessed through the non-terminal, but additional pointers are provided for ease of access.
 
 ```c
@@ -309,6 +323,7 @@ non_terminal {
 
 ### Parser generator implementation
 [top](#sapcc)
+
 The parser generator generates a recursive decent parser that outputs a simple syntax tree. It reads the specification that is created by the user and generates all of the functionality to read the parser's input, recognize the grammar, and output the tree. Also, the functions are generated that traverse the tree.
 
 The input file(s) define a scanner specification that separates the input terminal symbols into tokens, and a grammar that combines the tokens into groups that are used to create the syntax tree.
@@ -319,6 +334,7 @@ If there are conflicts in the grammar, the first item encountered is taken to be
 
 ### Parser errors
 [top](#sapcc)
+
 This addresses parser errors that are generated directly by the functionality.
 
 #### Compile time errors
