@@ -1,25 +1,25 @@
 # SAPCC
 
-- [SAPCC](#sapcc)
-  * [Directives](#directives)
-  * [Scanner Specification](#scanner-specification)
-    + [Regular expressions](#regular-expressions)
-    + [Scanner generator implementation](#scanner-generator-implementation)
-    + [File stack](#file-stack)
-    + [Scanner tokens](#scanner-tokens)
-    + [Scanner API](#scanner-api)
-    + [Scanner errors](#scanner-errors)
-      - [Compile time errors](#compile-time-errors)
-      - [Runtime errors](#runtime-errors)
-  * [Parser Specification](#parser-specification)
-  * [Rules](#rules)
-    + [Rule structure](#rule-structure)
-    + [Accessing data inside a rule clause](#accessing-data-inside-a-rule-clause)
-    + [Parser generator implementation](#parser-generator-implementation)
-    + [Parser errors](#parser-errors)
-      - [Compile time errors](#compile-time-errors-1)
-      - [Run time errors](#run-time-errors)
+* [Directives](#directives)
+* [Scanner Specification](#scanner-specification)
+  + [Regular expressions](#regular-expressions)
+  + [Scanner generator implementation](#scanner-generator-implementation)
+  + [File stack](#file-stack)
+  + [Scanner tokens](#scanner-tokens)
+  + [Scanner API](#scanner-api)
+  + [Scanner errors](#scanner-errors)
+    - [Compile time errors](#compile-time-errors)
+    - [Runtime errors](#runtime-errors)
+* [Parser Specification](#parser-specification)
+* [Rules](#rules)
+  + [Rule structure](#rule-structure)
+  + [Accessing data inside a rule clause](#accessing-data-inside-a-rule-clause)
+  + [Parser generator implementation](#parser-generator-implementation)
+  + [Parser errors](#parser-errors)
+    - [Compile time errors](#compile-time-errors-1)
+    - [Run time errors](#run-time-errors)
 
+----
 Simple As Possible Compiler Compiler
 
 This is a simplified compiler compiler that has a similar function as Flex/YACC or Antlr, but greatly simplified. The goal is to create a scanner generator and a parser generator that has a very simple input syntax and good error handling. The output language is C. 
@@ -38,7 +38,7 @@ Every function in the CC has a trace statement that can be activated using the v
 
 One extended goal is to use DOT notation (from Graphiz) to make balloon syntax drawings of the input that was submitted to the parser for analysis. That will be done after the parser generator is working reasonably well.
 
-## Directives
+## Directives (#sapcc)
 A directive is an entry in the file that controls how the input is used and how the output is generated. All aspects of the input file are controled by directives. These directives apply to both the parser and the scanner generators.
 
 - ``%verbosity number`` - This controls how much status is output on the terminal as the input is parsed and the output is emitted. Valid values are a counting numbers from zero (0) for no output except for actual errors and fiffty (50) for almost every single action that the generator takes.
