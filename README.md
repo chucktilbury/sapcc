@@ -1,4 +1,5 @@
 # SAPCC
+Simple As Possible Compiler Compiler
 
 * [Introduction](#introduction)
 * [Directives](#directives)
@@ -21,8 +22,6 @@
     - [Run time errors](#run-time-errors)
 
 ----
-Simple As Possible Compiler Compiler
-
 ## Introduction
 [top](#sapcc)
 
