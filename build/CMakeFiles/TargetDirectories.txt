@@ -1,0 +1,14 @@
+/home/chuck/Src/sapcc/build/CMakeFiles/rebuild_cache.dir
+/home/chuck/Src/sapcc/build/CMakeFiles/edit_cache.dir
+/home/chuck/Src/sapcc/build/CMakeFiles/format.dir
+/home/chuck/Src/sapcc/build/src/CMakeFiles/rebuild_cache.dir
+/home/chuck/Src/sapcc/build/src/CMakeFiles/edit_cache.dir
+/home/chuck/Src/sapcc/build/src/lib/CMakeFiles/rebuild_cache.dir
+/home/chuck/Src/sapcc/build/src/lib/CMakeFiles/edit_cache.dir
+/home/chuck/Src/sapcc/build/src/lib/CMakeFiles/common.dir
+/home/chuck/Src/sapcc/build/src/sapcc/CMakeFiles/rebuild_cache.dir
+/home/chuck/Src/sapcc/build/src/sapcc/CMakeFiles/edit_cache.dir
+/home/chuck/Src/sapcc/build/src/sapcc/CMakeFiles/sapcc.dir
+/home/chuck/Src/sapcc/build/docs/CMakeFiles/rebuild_cache.dir
+/home/chuck/Src/sapcc/build/docs/CMakeFiles/edit_cache.dir
+/home/chuck/Src/sapcc/build/docs/CMakeFiles/docs.dir

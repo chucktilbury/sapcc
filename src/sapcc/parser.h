@@ -5,22 +5,21 @@
 
 #include "utils.h"
 #include "fileio.h"
-#include "ptrlst.h"
 #include "strs.h"
 
 struct pat_elem_t {
-    STR str;
+    Str str;
     bool is_terminal;
 };
 
 struct pattern_t {
     // str_lst_t* lst;
     pat_elem_lst_t* elems;
-    STR code; // C code to run upon a pattern match
+    Str code; // C code to run upon a pattern match
 };
 
 struct rule_t {
-    STR name;
+    Str name;
     int cols;
     int rows;
     bool is_recursive;
@@ -34,8 +33,8 @@ typedef struct {
     int verbo;
 
     // raw names of output files as given by directives
-    STR name;
-    STR prefix;
+    Str name;
+    Str prefix;
 
     // string lists that will be copied as source code to the output,
     // as given by directives

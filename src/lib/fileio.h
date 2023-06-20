@@ -20,6 +20,6 @@ void close_output_file(FPTR fp);
 
 void emit_buf(FPTR h, const char* str);
 void emit_fmt(FPTR h, const char* fmt, ...);
-void emit_str(FPTR h, STR str);
+void emit_str(FPTR h, Str str);
 
 #endif /* _FILEIO_H */

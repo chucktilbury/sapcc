@@ -158,7 +158,7 @@ HashResult hashInsert(Hash* table, const char* key, void* data, size_t size) {
 
     table->table[slot]->key = _dup_str(key);
     if(data != NULL && size != 0) {
-        table->table[slot]->data = _alloc(size);
+        table->table[slot]->data = _alloc_mem(size);
         table->table[slot]->size = size;
         memcpy(table->table[slot]->data, data, size);
     }

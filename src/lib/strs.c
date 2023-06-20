@@ -22,15 +22,18 @@
  *
  */
 struct _string_ {
-    char* buffer;
     size_t len;
     size_t cap;
+    char buffer[0];
 };
 
+#define SIZE sizeof(struct _string_)
 #define NOT_NULL(p) assert((p) != NULL)
 #define LOCAL(n, p) \
     NOT_NULL(p);    \
-    struct _string_* n = (struct _string_*)(p)
+    struct _string_* n = IMPORT_PTR(p)
+#define IMPORT_PTR(p) (struct _string_*)((unsigned long)(p)-SIZE)
+#define EXPORT_PTR(p) (const char*)(&((struct _string_*)(p))->buffer[0])
 
 static void cat_string(struct _string_* ptr, const char* str) {
 
@@ -38,7 +41,7 @@ static void cat_string(struct _string_* ptr, const char* str) {
     if(ptr->len + len + 1 > ptr->cap) {
         while(ptr->len + len + 1 > ptr->cap)
             ptr->cap <<= 1;
-        ptr->buffer = _realloc_mem(ptr->buffer, ptr->cap);
+        ptr = _realloc_mem(ptr, ptr->cap+SIZE);
     }
 
     memcpy(&ptr->buffer[ptr->len], str, len + 1);
@@ -52,17 +55,17 @@ static void cat_string(struct _string_* ptr, const char* str) {
  * @param str
  * @return Str*
  */
-STR create_str(const char* str) {
+Str create_str(const char* str) {
 
-    struct _string_* ptr = _alloc_obj(struct _string_);
-    ptr->cap             = 0x01 << 3;
+    size_t cap = 0x01 << 3;
+    struct _string_* ptr = _alloc_mem(cap+SIZE);
+    ptr->cap             = cap;
     ptr->len             = 0;
-    ptr->buffer          = _alloc_array(char, ptr->cap);
 
     if(str != NULL && strlen(str) > 0)
         cat_string(ptr, str);
 
-    return (STR)ptr;
+    return EXPORT_PTR(ptr);
 }
 
 /**
@@ -72,7 +75,7 @@ STR create_str(const char* str) {
  * @param ...
  * @return Str*
  */
-STR create_str_fmt(const char* fmt, ...) {
+Str create_str_fmt(const char* fmt, ...) {
 
     va_list args;
 
@@ -80,13 +83,13 @@ STR create_str_fmt(const char* fmt, ...) {
     size_t len = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
 
-    char* str = _alloc(len + 2);
+    char* str = _alloc_mem(len + 2);
 
     va_start(args, fmt);
     vsnprintf(str, len + 2, fmt, args);
     va_end(args);
 
-    STR ptr = create_str(str);
+    Str ptr = create_str(str);
     _free(str);
 
     return ptr;
@@ -97,7 +100,7 @@ STR create_str_fmt(const char* fmt, ...) {
  *
  * @param h
  */
-void destroy_str(STR h) {
+void destroy_str(Str h) {
 
     LOCAL(p, h);
     _free(p->buffer);
@@ -111,12 +114,12 @@ void destroy_str(STR h) {
  * @param ch
  * @return int
  */
-int cat_str_char(STR ptr, int ch) {
+int cat_str_char(Str ptr, int ch) {
 
     LOCAL(str, ptr);
     if(str->len + 1 >= str->cap) {
         str->cap <<= 1;
-        str->buffer = _realloc_array(str->buffer, char, str->cap);
+        str = _realloc_mem(str, str->cap+SIZE);
     }
 
     str->buffer[str->len] = ch;
@@ -133,7 +136,7 @@ int cat_str_char(STR ptr, int ch) {
  * @param str
  * @return int
  */
-int cat_str_str(STR ptr, const char* str) {
+int cat_str_str(Str ptr, const char* str) {
 
     LOCAL(p, ptr);
     size_t len = strlen(str);
@@ -141,7 +144,7 @@ int cat_str_str(STR ptr, const char* str) {
     if(p->len + len + 1 >= p->cap) {
         while(p->len + len + 1 >= p->cap)
             p->cap <<= 1;
-        p->buffer = _realloc_array(p->buffer, char, p->cap);
+        p = _realloc_mem(p, p->cap+SIZE);
     }
 
     memcpy(&p->buffer[p->len], str, len + 1);
@@ -159,7 +162,7 @@ int cat_str_str(STR ptr, const char* str) {
  * @param ...
  * @return int
  */
-int cat_str_fmt(STR ptr, const char* fmt, ...) {
+int cat_str_fmt(Str ptr, const char* fmt, ...) {
 
     va_list args;
 
@@ -167,16 +170,16 @@ int cat_str_fmt(STR ptr, const char* fmt, ...) {
     size_t len = vsnprintf(NULL, 0, fmt, args);
     va_end(args);
 
-    char* str = _alloc(len + 2);
+    char* str = _alloc_mem(len + 2);
 
     va_start(args, fmt);
     vsnprintf(str, len + 2, fmt, args);
     va_end(args);
 
-    cat_str_str(ptr, str);
+    len = cat_str_str(ptr, str);
     _free(str);
 
-    return ((struct _string_*)ptr)->len;
+    return (int)len;
 }
 
 /**
@@ -185,7 +188,7 @@ int cat_str_fmt(STR ptr, const char* fmt, ...) {
  * @param ptr
  * @return Str*
  */
-int strip_str(STR ptr) {
+int strip_str(Str ptr) {
 
     LOCAL(p, ptr);
     int idx;
@@ -209,7 +212,7 @@ int strip_str(STR ptr) {
  *
  * @param str
  */
-void clear_str(STR str) {
+void clear_str(Str str) {
 
     LOCAL(ptr, str);
     ptr->len       = 0;
@@ -226,7 +229,7 @@ void clear_str(STR str) {
  * @param str
  * @return int
  */
-int comp_str(STR base, const char* str) {
+int comp_str(Str base, const char* str) {
 
     LOCAL(ptr, base);
     return strncmp(ptr->buffer, str, strlen(str));
@@ -237,9 +240,9 @@ int comp_str(STR base, const char* str) {
  *
  * @param str
  */
-void upcase_str(STR str) {
+void upcase_str(Str str) {
 
-    for(char* ptr = ((struct _string_*)str)->buffer; *ptr != '\0'; ptr++)
+    for(char* ptr = (char*)str; *ptr != '\0'; ptr++)
         *ptr = toupper(*ptr);
 }
 
@@ -248,9 +251,9 @@ void upcase_str(STR str) {
  *
  * @param str
  */
-void downcase_str(STR str) {
+void downcase_str(Str str) {
 
-    for(char* ptr = ((struct _string_*)str)->buffer; *ptr != '\0'; ptr++)
+    for(char* ptr = (char*)str; *ptr != '\0'; ptr++)
         *ptr = tolower(*ptr);
 }
 
@@ -260,9 +263,10 @@ void downcase_str(STR str) {
  * @param str
  * @return Str*
  */
-STR copy_str(STR str) {
+Str copy_str(Str str) {
 
-    return create_str(((struct _string_*)str)->buffer);
+    //return create_str(((struct _string_*)str)->buffer);
+    return create_str(str);
 }
 
 /**
@@ -272,22 +276,11 @@ STR copy_str(STR str) {
  * @param ptr
  * @return size_t
  */
-size_t len_str(STR ptr) {
+size_t len_str(Str ptr) {
 
-    return ((struct _string_*)ptr)->len;
+    LOCAL(p, ptr);
+    return p->len;
 }
-
-/**
- * @brief Return a pointer to the raw C string as a const char*.
- *
- * @param ptr
- * @return const char*
- */
-const char* raw_str(STR ptr) {
-
-    return ((struct _string_*)ptr)->buffer;
-}
-
 
 #ifdef TEST_STRINGS
 // build string:
@@ -295,49 +288,49 @@ const char* raw_str(STR ptr) {
 
 int main() {
 
-    STR s = create_str("create a string");
-    printf("str: %s\n", raw_str(s));
+    Str s = create_str("create a string");
+    printf("str: %s\n", s);
 
     s = create_str_fmt("create a %s with %s", "string", "formatting");
-    printf("str: %s\n", raw_str(s));
+    printf("str: %s\n", s);
 
     cat_str_char(s, 'X');
-    printf("str: %s\n", raw_str(s));
+    printf("str: %s\n", s);
 
     cat_str_str(s, " <- an \"exx\"");
-    printf("str: %s\n", raw_str(s));
+    printf("str: %s\n", s);
 
     cat_str_fmt(s, " with %s with number: %d", "formatting", 1234);
-    printf("str: %s\n", raw_str(s));
+    printf("str: %s\n", s);
 
     s = create_str("  \t  this is before stripping    ");
-    printf("str: \"%s\"\n", raw_str(s));
+    printf("B4 str: \"%s\"\n", s);
     strip_str(s);
-    printf("str: \"%s\"\n", raw_str(s));
+    printf("after str: \"%s\"\n", s);
     clear_str(s);
-    printf("str: \"%s\"\n", raw_str(s));
+    printf("clear str: \"%s\"\n", s);
 
     cat_str_str(s, "this is a lower case string");
-    printf("str: \"%s\"\n", raw_str(s));
+    printf("B4 str: \"%s\"\n", s);
     upcase_str(s);
-    printf("str: \"%s\"\n", raw_str(s));
+    printf("upcase str: \"%s\"\n", s);
     downcase_str(s);
-    printf("str: \"%s\"\n", raw_str(s));
+    printf("downcase str: \"%s\"\n", s);
 
     s = copy_str(s);
-    printf("str: \"%s\"\n", raw_str(s));
+    printf("copy of str: \"%s\"\n", s);
 
     s = create_str("monkey patch the bacon");
-    printf("compare strings \"%s\" and \"%s\" is %s\n", raw_str(s), "monkey patch the bacon",
+    printf("compare strings \"%s\" and \"%s\" is %s\n", s, "monkey patch the bacon",
            comp_str(s, "monkey patch the bacon") == 0 ? "true" : "false");
 
-    printf("compare strings \"%s\" and \"%s\" is %s\n", raw_str(s), "monkey patch", comp_str(s, "monkey patch") == 0 ? "true" : "false");
+    printf("compare strings \"%s\" and \"%s\" is %s\n", s, "monkey patch", comp_str(s, "monkey patch") == 0 ? "true" : "false");
 
-    printf("compare strings \"%s\" and \"%s\" is %s\n", raw_str(s), "patch the bacon", comp_str(s, "patch the bacon") == 0 ? "true" : "false");
+    printf("compare strings \"%s\" and \"%s\" is %s\n", s, "patch the bacon", comp_str(s, "patch the bacon") == 0 ? "true" : "false");
 
-    printf("compare strings \"%s\" and \"%s\" is %s\n", raw_str(s), "Monkey patch", comp_str(s, "Monkey patch") == 0 ? "true" : "false");
+    printf("compare strings \"%s\" and \"%s\" is %s\n", s, "Monkey patch", comp_str(s, "Monkey patch") == 0 ? "true" : "false");
 
-    printf("string \"%s\" length is %lu\n", raw_str(s), len_str(s));
+    printf("string \"%s\" length is %lu\n", s, len_str(s));
 
     return 0;
 }
@@ -353,7 +346,7 @@ int main() {
  * @param s
  * @return int
  */
-int find_str(STR str, const char* s) {
+int find_str(Str str, const char* s) {
 
     LOCAL(ptr, str);
     char* tmp = strstr(ptr->buffer, s);
@@ -374,10 +367,10 @@ int find_str(STR str, const char* s) {
  * @param end
  * @return Str*
  */
-STR clip_str(STR base, int start, int end) {
+Str clip_str(Str base, int start, int end) {
 
     LOCAL(ptr, base);
-    STR retv = NULL;
+    Str retv = NULL;
 
     if(start < end && (size_t)start < base->len && (size_t)end < base->len) {
         retv = create_str(NULL);
@@ -396,7 +389,7 @@ STR clip_str(STR base, int start, int end) {
  * @param idx
  * @return int
  */
-int truncate_str(STR str, int idx) {
+int truncate_str(Str str, int idx) {
 
     LOCAL(ptr, str);
     if((size_t)idx < ptr->len) {

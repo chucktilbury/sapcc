@@ -1,0 +1,1 @@
+/usr/bin/clang -g CMakeFiles/sapcc.dir/utils.c.o CMakeFiles/sapcc.dir/scanner.c.o CMakeFiles/sapcc.dir/parser.c.o CMakeFiles/sapcc.dir/main.c.o -o ../../../bin/sapcc  -lpthread -lgc ../../../bin/libcommon.a 

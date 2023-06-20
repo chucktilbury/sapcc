@@ -1,34 +1,26 @@
-cmake_minimum_required(VERSION 3.18)
-project(rdpgen)
+
+project(sapcc)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ./)
 
 add_executable(${PROJECT_NAME}
-    memory.c
-    parser.c
-    strs.c
-    rdpgen.c
-    dump.c
-    preproc.c
-    fileio.c
+    utils.c
     scanner.c
     parser.c
-    errors.c
-    emit.c
-    emit_ast.c
-    emit_parser.c
-    list.c
-    utils.c
+    main.c
 )
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC
         ${PROJECT_SOURCE_DIR}/
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/../lib
 )
 
 target_link_libraries(${PROJECT_NAME}
     pthread
     gc
+    common
 )
 
 target_compile_options(${PROJECT_NAME}

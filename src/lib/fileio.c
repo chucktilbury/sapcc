@@ -12,7 +12,7 @@
 
 struct _file_ptr_ {
     FILE* fp;
-    STR fname;
+    Str fname;
     int line_no;
     int col_no;
     int ch;
@@ -131,7 +131,7 @@ int get_col_no() {
 /**
  * @brief Return the current file name as it was opened.
  *
- * @return STR
+ * @return Str
  */
 const char* get_fname() {
 
@@ -144,7 +144,7 @@ const char* get_fname() {
 FPTR open_output_file(const char* fname) {
 
     struct _file_ptr_* ptr = _alloc_obj(struct _file_ptr_);
-    ptr->fp                = fopen(fname, "w");
+    ptr->fp                = fopen(fname, "wb");
     if(ptr->fp == NULL)
         fatal("cannot open output file: %s: %s\n", fname, strerror(errno));
 
@@ -181,7 +181,7 @@ void emit_fmt(FPTR h, const char* fmt, ...) {
     va_end(args);
 }
 
-void emit_str(FPTR h, STR str) {
+void emit_str(FPTR h, Str str) {
 
     struct _file_ptr_* ptr = (struct _file_ptr_*)h;
     fprintf(ptr->fp, "%s", raw_str(str));

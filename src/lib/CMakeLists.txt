@@ -1,17 +1,13 @@
 
 project(common)
 
-add_library(${PROJECT_NAME}
-    STATIC
-        opcodes.c
-        registers.c
-        cmdline.c
-        hash.c
-        list.c
-        inst_buf.c
-        str_table.c
-        val_table.c
-        str_utils.c
+add_library(${PROJECT_NAME} STATIC
+    fileio.c
+    hash.c
+    dllist.c
+    memory.c
+    strs.c
+    errors.c
 )
 
 target_include_directories(${PROJECT_NAME}

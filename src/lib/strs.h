@@ -14,29 +14,29 @@
  * @brief Opaque handle for string object.
  *
  */
-typedef void* STR;
+typedef const char* Str;
 
 /**
  * @brief Public interface.
  */
-STR create_str(const char* str);
-STR create_str_fmt(const char* fmt, ...);
-void destroy_str(STR h);
-int cat_str_char(STR h, int ch);
-int cat_str_str(STR h, const char* str);
-int cat_str_fmt(STR h, const char* fmt, ...);
-int strip_str(STR h);
+Str create_str(const char* str);
+Str create_str_fmt(const char* fmt, ...);
+void destroy_str(Str h);
+int cat_str_char(Str h, int ch);
+int cat_str_str(Str h, const char* str);
+int cat_str_fmt(Str h, const char* fmt, ...);
+int strip_str(Str h);
 
-void clear_str(STR h);
-void upcase_str(STR h);
-void downcase_str(STR h);
-STR copy_str(STR h);
-int comp_str(STR h, const char* str);
-size_t len_str(STR h);
-const char* raw_str(STR h);
+void clear_str(Str h);
+void upcase_str(Str h);
+void downcase_str(Str h);
+Str copy_str(Str h);
+int comp_str(Str h, const char* str);
+size_t len_str(Str h);
+const char* raw_str(Str h);
 
-// int truncate_str(STR h, int idx);
-// int find_str(STR h, const char* s);
-// STR clip_str(STR h, int start, int end);
+// int truncate_str(Str h, int idx);
+// int find_str(Str h, const char* s);
+// Str clip_str(Str h, int start, int end);
 
 #endif

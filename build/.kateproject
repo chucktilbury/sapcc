@@ -1,0 +1,23 @@
+{
+	"name": "rdpgen_exe-debug@build",
+	"directory": "/home/chuck/Src/sapcc",
+	"files": [ { "git": 1 } ],
+	"build": {
+		"directory": "/home/chuck/Src/sapcc/build",
+		"default_target": "all",
+		"clean_target": "clean",
+		"build": "/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build\" -j8 all",
+		"clean": "/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build\" -j8 clean",
+		"quick": "/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build\" -j8 install",
+		"targets":[
+			 {"name":"all", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build\" -j8 all"}
+			,{"name":"clean", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build\" -j8 clean"}
+			,{"name":"rebuild_cache", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build\" -j8 rebuild_cache"}
+			,{"name":"format", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build\" -j8 format"}
+			,{"name":"common", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build/src/lib\" -j8 common"}
+			,{"name":"common/fast", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build/src/lib\" -j8 common/fast"}
+			,{"name":"sapcc", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build/src/sapcc\" -j8 sapcc"}
+			,{"name":"sapcc/fast", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build/src/sapcc\" -j8 sapcc/fast"}
+			,{"name":"docs", "build_cmd":"/usr/bin/gmake -C \"/home/chuck/Src/sapcc/build/docs\" -j8 docs"}
+	] }
+}

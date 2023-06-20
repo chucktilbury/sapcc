@@ -19,7 +19,7 @@ typedef enum {
 
 typedef struct {
     TokenType type;
-    STR str;
+    Str str;
     int line;
     int col;
 } Token;

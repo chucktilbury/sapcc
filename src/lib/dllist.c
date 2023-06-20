@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "list.h"
+#include "dllist.h"
 #include "memory.h"
 
 /**
@@ -25,46 +25,46 @@ typedef struct _list_elem_ {
     struct _list_elem_* next;
     struct _list_elem_* prev;
     // unsigned char data; is implied by the pointer arithmetic
-} LST_ELEM;
+} ListElem;
 
 /**
  * @brief Public data structure that implements lists.
  *
  */
-struct _list_ {
-    LST_ELEM* first;
-    LST_ELEM* last;
-    LST_ELEM* crnt;
+typedef struct _list_ {
+    ListElem* first;
+    ListElem* last;
+    ListElem* crnt;
     size_t len;
-};
+} List;
 
-#define CAST_LST(p) ((struct _list_*)(p))
-#define VOID_TO_ELEM(p) ((LST_ELEM*)(((unsigned long)p) - sizeof(LST_ELEM)))
-#define ELEM_TO_VOID(p) ((void*)(((unsigned long)p) + sizeof(LST_ELEM)))
-
-#define RETURN_LST(p) return (LST)(p);
-
+#define ELEM_SIZE sizeof(ListElem)
 #define NOTNULL(p) assert((p) != NULL)
-#define LOCAL(t, n, p) t* n = (t*)p
+#define CAST_LST(p) ((struct _list_*)(p))
+#define IMPORT_ELEM(p)  ((ListElem*)(((unsigned long)(p)) - ELEM_SIZE))
+#define EXPORT_ELEM(p)  ((void*)(((unsigned long)(p)) + ELEM_SIZE))
+#define RETURN_PTR(p) return (DLList)(p);
+
 #define LOCAL_LST(n, p) \
     NOTNULL(p);         \
-    LOCAL(struct _list_, n, p)
+    List* n = (List*)(p)
+
 #define LOCAL_ELEM(n, p) \
     NOTNULL(p);          \
-    LST_ELEM* n = VOID_TO_ELEM(p)
+    ListElem* n = IMPORT_ELEM(p)
 
 /**
  * @brief Create a list object
  *
- * @return LST
+ * @return DLList
  */
-LST create_lst() {
+DLList create_lst() {
 
-    struct _list_* lst = _alloc_obj(struct _list_);
-    RETURN_LST(lst);
+    List* lst = _alloc_obj(List);
+    RETURN_PTR(lst);
 }
 
-static void free_elem(LST_ELEM* elem) {
+static void free_elem(ListElem* elem) {
 
     if(elem != NULL) {
         _free(elem);
@@ -76,12 +76,12 @@ static void free_elem(LST_ELEM* elem) {
  *
  * @param lst
  */
-void destroy_lst(LST lst) {
+void destroy_lst(DLList lst) {
 
     LOCAL_LST(l, lst);
 
-    LST_ELEM* elem;
-    LST_ELEM* next;
+    ListElem* elem;
+    ListElem* next;
 
     for(elem = l->first; elem != NULL; elem = next) {
         next = elem->next;
@@ -91,13 +91,13 @@ void destroy_lst(LST lst) {
     _free(lst);
 }
 
-static LST_ELEM* create_elem(void* data, size_t size, int type) {
+static ListElem* create_elem(void* data, size_t size, int type) {
 
     NOTNULL(data);
-    LST_ELEM* elem = _alloc(sizeof(LST_ELEM) + size);
+    ListElem* elem = _alloc_mem(ELEM_SIZE + size);
     elem->size     = size;
     elem->type     = type;
-    memcpy(ELEM_TO_VOID(elem), data, size);
+    memcpy(EXPORT_ELEM(elem), data, size);
 
     // note that _alloc_obj() clears the memory.
     return elem;
@@ -111,11 +111,11 @@ static LST_ELEM* create_elem(void* data, size_t size, int type) {
  * @param size
  * @param type
  */
-void append_lst(LST lst, void* data, size_t size, int type) {
+void append_lst(DLList lst, void* data, size_t size, int type) {
 
     NOTNULL(data);
     LOCAL_LST(l, lst);
-    LST_ELEM* elem = create_elem(data, size, type);
+    ListElem* elem = create_elem(data, size, type);
 
     if(l->last != NULL) {
         elem->prev    = l->last;
@@ -138,11 +138,11 @@ void append_lst(LST lst, void* data, size_t size, int type) {
  * @param size
  * @param type
  */
-void prepend_lst(LST lst, void* data, size_t size, int type) {
+void prepend_lst(DLList lst, void* data, size_t size, int type) {
 
     NOTNULL(data);
     LOCAL_LST(l, lst);
-    LST_ELEM* elem = create_elem(data, size, type);
+    ListElem* elem = create_elem(data, size, type);
 
     if(l->first != NULL) {
         elem->next     = l->first;
@@ -172,12 +172,12 @@ void prepend_lst(LST lst, void* data, size_t size, int type) {
  * @param type
  * @param flag
  */
-void insert_lst(LST lst, void* elem, void* ptr, size_t size, int type, bool flag) {
+void insert_lst(DLList lst, void* elem, void* ptr, size_t size, int type, bool flag) {
 
     NOTNULL(ptr);
     LOCAL_ELEM(e, elem);
-    LST_ELEM* next;
-    LST_ELEM* prev;
+    ListElem* next;
+    ListElem* prev;
 
     // insert after node
     if(flag) {
@@ -203,7 +203,7 @@ void insert_lst(LST lst, void* elem, void* ptr, size_t size, int type, bool flag
     }
 
     ((struct _list_*)lst)->len++;
-    LST_ELEM* nele = create_elem(ptr, size, type);
+    ListElem* nele = create_elem(ptr, size, type);
     nele->next     = next;
     nele->prev     = prev;
 
@@ -222,7 +222,7 @@ void insert_lst(LST lst, void* elem, void* ptr, size_t size, int type, bool flag
  * @param type
  * @param flag
  */
-void insert_lst_idx(LST lst, int index, void* ptr, size_t size, int type, bool flag) {
+void insert_lst_idx(DLList lst, int index, void* ptr, size_t size, int type, bool flag) {
 
     void* e = get_elem(lst, index);
     insert_lst(lst, e, ptr, size, type, flag);
@@ -239,10 +239,10 @@ void insert_lst_idx(LST lst, int index, void* ptr, size_t size, int type, bool f
  * @param index
  * @return void*
  */
-void* get_elem(LST lst, int index) {
+void* get_elem(DLList lst, int index) {
 
     LOCAL_LST(l, lst);
-    LST_ELEM* e;
+    ListElem* e;
 
     int count = 0;
     if(index >= 0) {
@@ -259,7 +259,7 @@ void* get_elem(LST lst, int index) {
     if(e == NULL)
         return NULL;
     else
-        return ELEM_TO_VOID(e);
+        return EXPORT_ELEM(e);
 }
 
 /**
@@ -272,7 +272,7 @@ void* get_elem(LST lst, int index) {
 size_t get_elem_size(void* elem) {
 
     NOTNULL(elem);
-    return VOID_TO_ELEM(elem)->size;
+    return IMPORT_ELEM(elem)->size;
 }
 
 /**
@@ -284,7 +284,7 @@ size_t get_elem_size(void* elem) {
 int get_elem_type(void* elem) {
 
     NOTNULL(elem);
-    return VOID_TO_ELEM(elem)->type;
+    return IMPORT_ELEM(elem)->type;
 }
 
 /**
@@ -293,7 +293,7 @@ int get_elem_type(void* elem) {
  * @param lst
  * @return size_t
  */
-size_t get_lst_len(LST lst) {
+size_t get_lst_len(DLList lst) {
 
     return ((struct _list_*)lst)->len;
 }
@@ -306,7 +306,7 @@ size_t get_lst_len(LST lst) {
  * @param lst
  * @param index
  */
-void remove_lst_idx(LST lst, int index) {
+void remove_lst_idx(DLList lst, int index) {
 
     remove_lst(lst, (void*)get_elem(lst, index));
 }
@@ -318,7 +318,7 @@ void remove_lst_idx(LST lst, int index) {
  * @param lst
  * @param elem
  */
-void remove_lst(LST lst, void* elem) {
+void remove_lst(DLList lst, void* elem) {
 
     LOCAL_LST(l, lst);
     LOCAL_ELEM(e, elem);
@@ -342,8 +342,8 @@ void remove_lst(LST lst, void* elem) {
     // not first or last in a non-empty list
     else {
         // clarity is king
-        LST_ELEM* next = e->next;
-        LST_ELEM* prev = e->prev;
+        ListElem* next = e->next;
+        ListElem* prev = e->prev;
         next->prev     = prev;
         prev->next     = next;
     }
@@ -359,7 +359,7 @@ void remove_lst(LST lst, void* elem) {
  * @param size
  * @param type
  */
-void push_lst(LST lst, void* ptr, size_t size, int type) {
+void push_lst(DLList lst, void* ptr, size_t size, int type) {
 
     prepend_lst(lst, ptr, size, type);
 }
@@ -370,10 +370,10 @@ void push_lst(LST lst, void* ptr, size_t size, int type) {
  * @param lst
  * @return void*
  */
-void* peek_lst(LST lst) {
+void* peek_lst(DLList lst) {
 
     LOCAL_LST(l, lst);
-    return ELEM_TO_VOID(l->first);
+    return EXPORT_ELEM(l->first);
 }
 
 /**
@@ -381,10 +381,10 @@ void* peek_lst(LST lst) {
  *
  * @param lst
  */
-void pop_lst(LST lst) {
+void pop_lst(DLList lst) {
 
     LOCAL_LST(l, lst);
-    LST_ELEM* tmp = l->first;
+    ListElem* tmp = l->first;
     l->first      = l->first->next;
     if(l->first != NULL)
         l->first->prev = NULL;
@@ -403,11 +403,11 @@ void pop_lst(LST lst) {
  * @param lst
  * @return void*
  */
-void* reset_lst(LST lst) {
+void* reset_lst(DLList lst) {
 
     LOCAL_LST(l, lst);
     l->crnt = l->first;
-    return ELEM_TO_VOID(l->crnt);
+    return EXPORT_ELEM(l->crnt);
 }
 
 /**
@@ -419,14 +419,14 @@ void* reset_lst(LST lst) {
  * @param lst
  * @return void*
  */
-void* iterate_lst(LST lst) {
+void* iterate_lst(DLList lst) {
 
     LOCAL_LST(l, lst);
     if(l->crnt != NULL)
         l->crnt = l->crnt->next;
 
     if(l->crnt != NULL)
-        return ELEM_TO_VOID(l->crnt);
+        return EXPORT_ELEM(l->crnt);
     else
         return NULL;
 }
@@ -436,11 +436,11 @@ void* iterate_lst(LST lst) {
  */
 #ifdef _TEST_LISTS_
 // build string:
-// gcc -Wall -Wextra -D_TEST_LISTS_ -g -o l list.c memory.c
+// gcc -Wall -Wextra -D_TEST_LISTS_ -g -o l dllist.c memory.c
 
-typedef LST int_lst_t;
+typedef DLList int_lst_t;
 
-#define create() LST lst = create_lst()
+#define create() List* lst = create_lst()
 #define destroy() destroy_lst(lst)
 
 #define insert(i, f) insert_lst_idx(lst, i, &val, sizeof(int), 124, f)
@@ -454,7 +454,7 @@ typedef LST int_lst_t;
 
 #define show() show_list(lst)
 
-void show_list(LST lst) {
+void show_list(DLList lst) {
 
     int count = 0;
 
