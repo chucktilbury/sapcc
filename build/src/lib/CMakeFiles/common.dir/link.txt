@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../../../bin/libcommon.a CMakeFiles/common.dir/fileio.c.o CMakeFiles/common.dir/hash.c.o CMakeFiles/common.dir/dllist.c.o CMakeFiles/common.dir/memory.c.o CMakeFiles/common.dir/strs.c.o CMakeFiles/common.dir/errors.c.o
-/usr/bin/ranlib ../../../bin/libcommon.a
