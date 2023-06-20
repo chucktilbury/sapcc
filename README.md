@@ -1,4 +1,5 @@
 # SAPCC
+
 Simple As Possible Compiler Compiler
 
 This is a simplified compiler compiler that has a similar function as Flex/YACC or Antlr, but greately simplified. The goal is to create a scanner generator and a parser generator that has a very simple input syntax and good error handling. The output language is C. 
