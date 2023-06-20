@@ -38,7 +38,7 @@ Every function in the CC has a trace statement that can be activated using the v
 
 One extended goal is to use DOT notation (from Graphiz) to make balloon syntax drawings of the input that was submitted to the parser for analysis. That will be done after the parser generator is working reasonably well.
 
-## Directives (#sapcc)
+## Directives [top](#sapcc)
 A directive is an entry in the file that controls how the input is used and how the output is generated. All aspects of the input file are controled by directives. These directives apply to both the parser and the scanner generators.
 
 - ``%verbosity number`` - This controls how much status is output on the terminal as the input is parsed and the output is emitted. Valid values are a counting numbers from zero (0) for no output except for actual errors and fiffty (50) for almost every single action that the generator takes.
