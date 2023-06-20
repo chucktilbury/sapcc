@@ -1,8 +1,28 @@
 # SAPCC
 
+- [SAPCC](#sapcc)
+  * [Directives](#directives)
+  * [Scanner Specification](#scanner-specification)
+    + [Regular expressions](#regular-expressions)
+    + [Scanner generator implementation](#scanner-generator-implementation)
+    + [File stack](#file-stack)
+    + [Scanner tokens](#scanner-tokens)
+    + [Scanner API](#scanner-api)
+    + [Scanner errors](#scanner-errors)
+      - [Compile time errors](#compile-time-errors)
+      - [Runtime errors](#runtime-errors)
+  * [Parser Specification](#parser-specification)
+  * [Rules](#rules)
+    + [Rule structure](#rule-structure)
+    + [Accessing data inside a rule clause](#accessing-data-inside-a-rule-clause)
+    + [Parser generator implementation](#parser-generator-implementation)
+    + [Parser errors](#parser-errors)
+      - [Compile time errors](#compile-time-errors-1)
+      - [Run time errors](#run-time-errors)
+
 Simple As Possible Compiler Compiler
 
-This is a simplified compiler compiler that has a similar function as Flex/YACC or Antlr, but greately simplified. The goal is to create a scanner generator and a parser generator that has a very simple input syntax and good error handling. The output language is C. 
+This is a simplified compiler compiler that has a similar function as Flex/YACC or Antlr, but greatly simplified. The goal is to create a scanner generator and a parser generator that has a very simple input syntax and good error handling. The output language is C. 
 
 What is intended by SAPCC is to have an input syntax that has very few features, but is still able to capture all constructs that are needed to create a full featured parser for a language compiler. Also, it creates output code that is readable by someone who is not very experienced with C. No doubt there are people who are reading this and question if C++ or some other object based language would be better, but I like C and it's completely adequate for this purpose. 
 
@@ -12,7 +32,7 @@ The syntax tree that is output is not an "abstract" syntax tree. All of the symb
 
 The input file consists of 3 parts. They are directives, parser, and scanner. These parts can be placed in separate files or all in the same file. The order of directives and sections is very flexible. The syntax of the files are also very flexible. In general, spaces are ignored.
 
-All memory allocations that happen are covered by the Bohem garbage collection library. No attempt is made to free any memory used, even if a particular set of library routines (such as strings or lists) have the routines present to free memory. The garbage collector makes those routines NOOPs. 
+All memory allocations that happen are covered by the Bohem garbage collection library. (https://en.wikipedia.org/wiki/Boehm_garbage_collector) No attempt is made to free any memory used, even if a particular set of library routines (such as strings or lists) have the routines present to free memory. The garbage collector makes those routines NOOPs. 
 
 Every function in the CC has a trace statement that can be activated using the verbosity directive.
 
@@ -156,7 +176,7 @@ Run time is when the generated scanner reads the user's input and performs the o
 ## Parser Specification
 The parser is specified in one or more parser blocks. (see above) A parser block consists of one or more parser rules. A parser rule consists of a non-terminal symbol definition that is followed by one or more patterns. When there is more than one %parser directive encountered, they are simply concatenated in the order they are seen, as if they appeared in a single specification. One or more optional %code directives can be embedded within a parser specification and the code that they contain is concatenated and added to the beginning of the parser file.
 
-This system implements a recursive decent parser that creates a syntax tree of the user's input. That is not the same as an abstract syntax tree (AST). An abstrat tree has a lot of uninteresting data removed and does a better job of capturing the actual meaning of the user's input. This parser only attempts to capture the syntax of the user's input and validate that it matches the grammar. It does not have any logic to validate that the user's input is correct other than that. The person using the parser to create a language has to add the code to validate things like whether symbols are correct and such. That is done by adding callback information to the individual rules. There are 2 ways to do that.
+This system implements a recursive decent parser that creates a syntax tree of the user's input. That is not the same as an abstract syntax tree (AST). An abstract tree has a lot of uninteresting data removed and does a better job of capturing the actual meaning of the user's input. This parser only attempts to capture the syntax of the user's input and validate that it matches the grammar. It does not have any logic to validate that the user's input is correct other than that. The person using the parser to create a language has to add the code to validate things like whether symbols are correct and such. That is done by adding callback information to the individual rules. There are 2 ways to do that.
 
 The output of the parser is a syntax tree data structure. The tree is implemented as a linked list of linked lists. So, each node has a list of nodes that create the tree. In addition to that, a function entry point is generated that allows the tree to be automatically traversed, visiting every node that was created by the parse. Provision is made for the user of the parser to implement a syntax-directed logic that performs the work that the parser is required to do. This particular functionality is intended to be used to create a compiler.
 
@@ -297,4 +317,4 @@ Run time errors happen when the generated parser reads the user's input and atte
 - Note that semantic errors can only be detected by the user's code. This parser generator only attepmts to match the syntax to the grammar.
 
 
-  
+
