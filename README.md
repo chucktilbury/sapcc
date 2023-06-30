@@ -1,33 +1,34 @@
 # SAPCC
 Simple As Possible Compiler Compiler
 
-* [Introduction](#introduction)
-* [Directives](#directives)
-* [Scanner Specification](#scanner-specification)
-  + [Regular expressions](#regular-expressions)
-  + [Scanner generator implementation](#scanner-generator-implementation)
-  + [File stack](#file-stack)
-  + [Scanner tokens](#scanner-tokens)
-  + [Scanner API](#scanner-api)
-  + [Scanner errors](#scanner-errors)
-    - [Compile time errors](#compile-time-errors)
-    - [Runtime errors](#runtime-errors)
-* [Parser Specification](#parser-specification)
-* [Rules](#rules)
-  + [Rule structure](#rule-structure)
-  + [Accessing data inside a rule clause](#accessing-data-inside-a-rule-clause)
-  + [Parser generator implementation](#parser-generator-implementation)
-  + [Parser errors](#parser-errors)
-    - [Compile time errors](#compile-time-errors-1)
-    - [Run time errors](#run-time-errors)
+- [SAPCC](#sapcc)
+  - [Introduction](#introduction)
+  - [Directives](#directives)
+  - [Scanner Specification](#scanner-specification)
+    - [Regular expressions](#regular-expressions)
+    - [Scanner generator implementation](#scanner-generator-implementation)
+    - [File stack](#file-stack)
+    - [Scanner tokens](#scanner-tokens)
+    - [Scanner API](#scanner-api)
+    - [Scanner errors](#scanner-errors)
+      - [Compile time errors](#compile-time-errors)
+      - [Runtime errors](#runtime-errors)
+  - [Parser Specification](#parser-specification)
+  - [Rules](#rules)
+    - [Rule structure](#rule-structure)
+    - [Accessing data inside a rule clause](#accessing-data-inside-a-rule-clause)
+    - [Parser generator implementation](#parser-generator-implementation)
+    - [Parser errors](#parser-errors)
+      - [Compile time errors](#compile-time-errors-1)
+      - [Run time errors](#run-time-errors)
 
 ----
 ## Introduction
 [top](#sapcc)
 
-This is a simplified compiler compiler that has a similar function as Flex/YACC or Antlr, but greatly simplified. The goal is to create a scanner generator and a parser generator that has a very simple input syntax and good error handling. The output language is C. 
+This is a simplified compiler compiler that has a similar function as Flex/YACC or Antlr, but greatly simplified. The goal is to create a scanner generator and a parser generator that has a very simple input syntax and good error handling. The output language is C.
 
-What is intended by SAPCC is to have an input syntax that has very few features, but is still able to capture all constructs that are needed to create a full featured parser for a language compiler. Also, it creates output code that is readable by someone who is not very experienced with C. No doubt there are people who are reading this and question if C++ or some other object based language would be better, but I like C and it's completely adequate for this purpose. 
+What is intended by SAPCC is to have an input syntax that has very few features, but is still able to capture all constructs that are needed to create a full featured parser for a language compiler. Also, it creates output code that is readable by someone who is not very experienced with C. No doubt there are people who are reading this and question if C++ or some other object based language would be better, but I like C and it's completely adequate for this purpose.
 
 The output for a given parser is divided into several files for the actual parser, the scanner, and a syntax tree walker. Also a library of utilities is required to actually build the parser that is generated, as well as the code that actually uses the syntax tree. These are in separate files for ease of use.
 
@@ -35,13 +36,13 @@ The syntax tree that is output is not an "abstract" syntax tree. All of the symb
 
 The input file consists of 3 parts. They are directives, parser, and scanner. These parts can be placed in separate files or all in the same file. The order of directives and sections is very flexible. The syntax of the files are also very flexible. In general, spaces are ignored.
 
-All memory allocations that happen are covered by the Bohem garbage collection library. (https://en.wikipedia.org/wiki/Boehm_garbage_collector) No attempt is made to free any memory used, even if a particular set of library routines (such as strings or lists) have the routines present to free memory. The garbage collector makes those routines NOOPs. 
+All memory allocations that happen are covered by the Bohem garbage collection library. (https://en.wikipedia.org/wiki/Boehm_garbage_collector) No attempt is made to free any memory used, even if a particular set of library routines (such as strings or lists) have the routines present to free memory. The garbage collector makes those routines NOOPs.
 
 Every function in the CC has a trace statement that can be activated using the verbosity directive.
 
 One extended goal is to use DOT notation (from Graphiz) to make balloon syntax drawings of the input that was submitted to the parser for analysis. That will be done after the parser generator is working reasonably well.
 
-## Directives 
+## Directives
 [top](#sapcc)
 
 A directive is an entry in the file that controls how the input is used and how the output is generated. All aspects of the input file are controled by directives. These directives apply to both the parser and the scanner generators.
@@ -58,14 +59,14 @@ A directive is an entry in the file that controls how the input is used and how 
 ## Scanner Specification
 [top](#sapcc)
 
-The scanner is specified in one or more scanner blocks. (see above) A scanner block consists of one or more scanner rules. A scanner rule consists of an optional symbol, exactly one pattern, and a required code block. The code block is executed when then the pattern is recognized by the scanner driver. It can be used to do translations on the token that was read. One or more %code directives can be optionally embedded in the scanner section to facilitate this functionality. Rules are taken in the order they are received. Rule recogntion is "greedy" in the the longest match that is possible is the one that is taken. This implies that situations where more than one rule matches, the first one that is defined in the one that is taken to be true. For example, keywords may look like a symbol, but for the placement in the specification. This is due to the simplicity of the recognition algorithm. 
+The scanner is specified in one or more scanner blocks. (see above) A scanner block consists of one or more scanner rules. A scanner rule consists of an optional symbol, exactly one pattern, and a required code block. The code block is executed when then the pattern is recognized by the scanner driver. It can be used to do translations on the token that was read. One or more %code directives can be optionally embedded in the scanner section to facilitate this functionality. Rules are taken in the order they are received. Rule recogntion is "greedy" in the the longest match that is possible is the one that is taken. This implies that situations where more than one rule matches, the first one that is defined in the one that is taken to be true. For example, keywords may look like a symbol, but for the placement in the specification. This is due to the simplicity of the recognition algorithm.
 
 ```
 # This is an example scanner specification with explanations of the elements.
 # Comments can appear anywhere in the input file and start with a '#' and end at the new line.
 
 # The is the general form of a scanner block.
-%scanner {
+%scanner
   %code {
     // note that this C code is copied to the beginning of the scanner source file verbatim.
     static struct some_code {
@@ -82,9 +83,9 @@ The scanner is specified in one or more scanner blocks. (see above) A scanner bl
   # This rule defines a generic symbol.
   # Patterns for regular expressions are enclosed in ()
   SYMB: ([a-zA-Z_][a-zA-Z_0-9]*) {
-    // Look up the name or something, or nothing at all. This code is copied to the inside 
+    // Look up the name or something, or nothing at all. This code is copied to the inside
     // of the function that recognizes the pattern and it is executed as the function is
-    // returning. 
+    // returning.
   }
 
   # This rule defines a complex number.
@@ -110,12 +111,12 @@ The scanner is specified in one or more scanner blocks. (see above) A scanner bl
   # then the rule will cause a scanner error if there is no quote encountered before the
   # new line. All characters are copied to the token string, including the enclosing quotes.
   QSTR: (["][ \n\r\t.]*["]) {}
-}
+
 ```
 ### Regular expressions
 [top](#sapcc)
 
-A regular expression is a construct that is capable of matching a variable character set within limits. The expression and the literal strings have to be matched together to select the proper result to return. For this scanner, regular expressions are a simplified hybrid of other implementations and instead of compiling them into a virtual environment, they are emitted as functions. The expressions are represented as one or more character ranges with an optional operator. 
+A regular expression is a construct that is capable of matching a variable character set within limits. The expression and the literal strings have to be matched together to select the proper result to return. For this scanner, regular expressions are a simplified hybrid of other implementations and instead of compiling them into a virtual environment, they are emitted as functions. The expressions are represented as one or more character ranges with an optional operator.
 
 - ``[]`` - A character range that matches exactly one character.
 - ``[]*`` - A character range that matches zero or more characters.
@@ -130,7 +131,7 @@ A character range is defined as a group of characters.
 ### Scanner generator implementation
 [top](#sapcc)
 
-The scanner is a hybrid state machine. The rules are translated to C functions. The functions are kept in an array and executed in turn. If there is a possible match when a character is read, then the rule has a weight value incremented. When there are no more possible matches, then the rule with the highest weight is chosen to return. Regular expressions are implemented as individual functions where the character range is matched according to the operator.  
+The scanner is a hybrid state machine. The rules are translated to C functions. The functions are kept in an array and executed in turn. If there is a possible match when a character is read, then the rule has a weight value incremented. When there are no more possible matches, then the rule with the highest weight is chosen to return. Regular expressions are implemented as individual functions where the character range is matched according to the operator.
 
 ### File stack
 [top](#sapcc)
@@ -148,7 +149,7 @@ The token data structure is as follows:
 typedef struct {
   TokenType type;  // enum token number
   STR string;      // the string that was recognized for the token
-  void* data;      // user's optional data for the token 
+  void* data;      // user's optional data for the token
   int line;        // line number that the token comes from
   int column;      // column number that the token was recognized from
   STR file_name;   // file name of the file that the token was in
@@ -181,16 +182,16 @@ This addresses error handling that is built into the generator and the generated
 #### Compile time errors
 [top](#sapcc)
 
-Compile time is when the scanner specification is read and processed into the data structures that will be used for further processing. 
+Compile time is when the scanner specification is read and processed into the data structures that will be used for further processing.
 
 - If an input file cannot be opened, as specified on the command line or using an ``%include`` directive, then a fatal error happens.
-  
-- Any part of a rule is malformed causes a compile time error. Error recovery is attempted by reading a few characters and then trying to synchronize on a rule. If that cannot be done, then the error becomes fatal.
-  
-#### Runtime errors
-Run time is when the generated scanner reads the user's input and performs the operatons that have been specified. 
 
-- An unknown character is encountered. A table is made by the scanner that identitifies all valid characters. If an input character that is not valid is encountered, then the scanner produces a non-fatal error. 
+- Any part of a rule is malformed causes a compile time error. Error recovery is attempted by reading a few characters and then trying to synchronize on a rule. If that cannot be done, then the error becomes fatal.
+
+#### Runtime errors
+Run time is when the generated scanner reads the user's input and performs the operatons that have been specified.
+
+- An unknown character is encountered. A table is made by the scanner that identitifies all valid characters. If an input character that is not valid is encountered, then the scanner produces a non-fatal error.
 
 - A token cannot be created from the input. This happens when the specification incorrectly specifies token, but the specification is syntatically correct. This is a fatal error because the scanner cannot continue when it happens.
 
@@ -205,11 +206,11 @@ The output of the parser is a syntax tree data structure. The tree is implemente
 
 A block of arbitrary code can be added to the rule such that it will be run when the rule is recognized by the parser, meaning that when a non-terminal symbol is recognized, then the code will be run. Second a block of code is defined such that it is run when the syntax tree is traversed. This code is defined after the rule clause. These blocks of code can be any arbitrary code and there is no limit on the length, but it is thought that it would realistically be one or two lines where the bulk of the code is defined somewhere else. That's why the ``%code`` directives exist, but nothing says that there could be code defined in another file somewhere.
 
-The idea is that all of the code that emits something for the compiler output will be run when the syntax tree is traversed. The code to start and traverse the syntax tree is generated by this functionality. Semantic errors that result from code that is syntatically correct will be caught and reported by logic that is not implemented by this system. Also this system does not implement the logic to emit any kind of compiler output. 
+The idea is that all of the code that emits something for the compiler output will be run when the syntax tree is traversed. The code to start and traverse the syntax tree is generated by this functionality. Semantic errors that result from code that is syntatically correct will be caught and reported by logic that is not implemented by this system. Also this system does not implement the logic to emit any kind of compiler output.
 
 ```
 # This is an example of a set of parser rules.
-%parser {
+%parser
   # The code defined in this block will be placed near the beginning of the
   # generated code for the parser.
   %code {
@@ -233,40 +234,39 @@ The idea is that all of the code that emits something for the compiler output wi
     : module_element {
       // C code.
     }
-  
+
   # This rule demonstrates that several different non-terminals can make a
   # rule.
   module_element {}
     : namespace_definition {}
     : class_definition {}
     : include_definition {}
-  
+
   # This rule demonstrates an indirectly recursive rule.
-  namespace_definition {} 
+  namespace_definition {}
     : NAMESPACE SYMBOL OBRACE module CBRACE {}
-  
+
   # This rule demonstrates that blank rules are not allowed.
   class_definition {}
     : CLASS SYMBOL OPAREN SYMBOL CPAREN class_body {}
     : CLASS SYMBOL OPAREN CPAREN class_body {}
     : CLASS SYMBOL class_body {}
-  
+
   # The scanner supports having multiple files open for inclusion.
   include_definition {}
     : INCLUDE SYMBOL {}
-  
+
   # This is left empty, but that is not correct syntax. Don't want to write a whole
   # grammar in this example.
   class_body {}
-    : ... {}
-}
+    : some stuff {}
 
 ```
 
 ## Rules
 [top](#sapcc)
 
-Parser rules are fairly flexible. There are a few caviats due to the simplicity of the system. 
+Parser rules are fairly flexible. There are a few caviats due to the simplicity of the system.
 
 - Blank rules are not allowed.
 - Recursive rules for lists have to have a specific form. The recursive part of the has to be the first rule clause and left recursion is not supported.
@@ -316,7 +316,7 @@ non_terminal {
     // For example:
     $0->data = update_user_data($0);
   }
-# Note the absence of a symbol following the list of clauses. 
+# Note the absence of a symbol following the list of clauses.
 
 ```
 
@@ -327,7 +327,7 @@ The parser generator generates a recursive decent parser that outputs a simple s
 
 The input file(s) define a scanner specification that separates the input terminal symbols into tokens, and a grammar that combines the tokens into groups that are used to create the syntax tree.
 
-First, the input file(s) are scanned and parsed into a data structure that represents the raw input. Then the data structure is traversed to output the code that implementes the actual parser and the other functionality. 
+First, the input file(s) are scanned and parsed into a data structure that represents the raw input. Then the data structure is traversed to output the code that implementes the actual parser and the other functionality.
 
 If there are conflicts in the grammar, the first item encountered is taken to be correct. There is no real detection for conflicts, as it the normal case for recursive decent parsers.
 
