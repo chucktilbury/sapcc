@@ -1,12 +1,9 @@
 
-#include <ctype.h>
+#include "standard.h"
 #include <stdarg.h>
-#include <stdbool.h>
 #include <string.h>
 
-#include "errors.h"
-#include "fileio.h"
-#include "memory.h"
+#include "common.h"
 #include "scanner.h"
 
 #define IS_SYMBOL(c) (isalpha(c) || (c) == '_')
@@ -21,6 +18,16 @@
 #endif
 
 static Token _tok;
+
+static void syntax(const char* fmt, ...) {
+
+    va_list args;
+    fprintf(stderr, "scanner ");
+
+    va_start(args, fmt);
+    error(fmt, args);
+    va_end(args);
+}
 
 static void check_eof(const char* fmt, ...) {
 
@@ -71,6 +78,14 @@ static void get_directive() {
         _tok.type = PREFIX;
     else if(!strcmp(raw_str(_tok.str), "%code"))
         _tok.type = CODE;
+    else if(!strcmp(raw_str(_tok.str), "%scanner"))
+        _tok.type = SCANNER;
+    else if(!strcmp(raw_str(_tok.str), "%parser"))
+        _tok.type = PARSER;
+    else if(!strcmp(raw_str(_tok.str), "%include"))
+        _tok.type = INCLUDE;
+    else if(!strcmp(raw_str(_tok.str), "%syntax"))
+        _tok.type = SYNTAX;
     else {
         _tok.type = ERROR;
         syntax("unknown directive: %s", raw_str(_tok.str));
@@ -150,6 +165,19 @@ static void get_symbol() {
     _tok.type = SYMBOL;
 }
 
+static void get_regex() {
+
+    consume_char(); // the '('
+    int ch;
+
+    while(')' != (ch = get_char())) {
+        cat_str_char(_tok.str, ch);
+        consume_char();
+    }
+
+    consume_char(); // the ')'
+    _tok.type = REGEX;
+}
 
 TokenType get_token(Token* tok) {
 
@@ -196,6 +224,10 @@ TokenType consume_token(Token* tok) {
                 get_block();
                 finished = true;
                 break;
+            case '(':
+                get_regex();
+                finished = true;
+                break;
             default:
                 if(isdigit(get_char()))
                     get_number();
@@ -228,5 +260,17 @@ const char* tok_to_str(TokenType type) {
     (type == NAME)         ? "file name directive" :
     (type == PREFIX)       ? "data structure prefix directive" :
     (type == CODE)         ? "code directive" :
+    (type == SCANNER)      ? "scanner directive" :
+    (type == PARSER)       ? "parser directive" :
+    (type == INCLUDE)      ? "include directive" :
+    (type == SYNTAX)       ? "syntax directive" :
+    (type == REGEX)        ? "regular expression" :
+    (type == END_OF_INPUT) ? "end of input" :
                              "UNKNOWN";
+}
+
+void open_scanner_file(const char* fname) {
+
+    open_input_file(fname);
+    consume_token(NULL);
 }

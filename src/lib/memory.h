@@ -1,8 +1,6 @@
 #ifndef _MEMORY_H
 #define _MEMORY_H
 
-#include <stddef.h>
-
 void* mem_alloc(size_t size);
 void* mem_realloc(void* ptr, size_t size);
 void* mem_dup_str(const char* str);

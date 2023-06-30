@@ -8,6 +8,7 @@ add_library(${PROJECT_NAME} STATIC
     memory.c
     strs.c
     errors.c
+    llist.c
 )
 
 target_include_directories(${PROJECT_NAME}

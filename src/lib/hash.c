@@ -23,16 +23,10 @@
  * Test build string:
  * clang -Wall -Wextra -DTEST -g -o t hash_examp.c memory.c
  */
-
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "standard.h"
 #include <string.h>
 
-#include "hash.h"
-#include "memory.h"
+#include "common.h"
 
 static uint32_t hash_func(const char* key) {
 

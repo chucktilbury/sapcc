@@ -14,7 +14,7 @@
  * @brief Opaque handle for string object.
  *
  */
-typedef const char* Str;
+typedef struct _string_* Str;
 
 /**
  * @brief Public interface.

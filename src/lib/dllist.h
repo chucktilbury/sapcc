@@ -9,16 +9,15 @@
 #ifndef _DLLIST_H
 #define _DLLIST_H
 
-#include <stdbool.h>
-#include <stddef.h>
-
 /**
  * @brief Lists are accessed using an opaque handle.
  */
 typedef void* DLList;
 
 /**
+ *
  * @brief Public interface.
+ *
  */
 DLList create_lst();
 void destroy_lst(DLList lst);

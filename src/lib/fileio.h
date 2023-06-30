@@ -1,8 +1,6 @@
 #ifndef _FILEIO_H
 #define _FILEIO_H
 
-#include "strs.h"
-
 // The file stack for input files is implicitly defined.
 void open_input_file(const char* fname);
 int get_char();

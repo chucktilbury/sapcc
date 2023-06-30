@@ -1,8 +1,13 @@
-
-#include <stdio.h>
-#include <stdlib.h>
+/**
+ * @file memory.c
+ *
+ * @brief Interface to the GC library or the libc allocation routines.
+ *
+ */
+#include "standard.h"
 #include <string.h>
 
+#include "errors.h"
 #include "memory.h"
 #ifdef USE_GC
 #include <gc.h>
@@ -16,10 +21,8 @@ void* mem_alloc(size_t size) {
     void* ptr  = GC_MALLOC(size);
 #endif
 
-    if(ptr == NULL) {
-        fprintf(stderr, "Cannot allocate memory: %lu\n", size);
-        exit(1);
-    }
+    if(ptr == NULL)
+        fatal("Cannot allocate memory: %lu\n", size);
 
     memset(ptr, 0, size);
     return ptr;
@@ -33,10 +36,8 @@ void* mem_realloc(void* ptr, size_t size) {
     void* nptr = GC_REALLOC(ptr, size);
 #endif
 
-    if(nptr == NULL) {
-        fprintf(stderr, "Cannot reallocate memory: %lu\n", size);
-        exit(1);
-    }
+    if(nptr == NULL)
+        fatal("Cannot reallocate memory: %lu\n", size);
 
     return nptr;
 }
@@ -68,10 +69,8 @@ void* mem_dup(void* ptr, size_t size) {
     void* nptr = GC_MALLOC(size);
 #endif
 
-    if(nptr == NULL) {
-        fprintf(stderr, "Cannot duplicate memory: %lu\n", size);
-        exit(1);
-    }
+    if(nptr == NULL)
+        fatal("Cannot duplicate memory: %lu\n", size);
 
     memcpy(nptr, ptr, size);
     return nptr;

@@ -128,4 +128,3 @@ STR parser_lock_name(STR name) {
 
     return tmp;
 }
-

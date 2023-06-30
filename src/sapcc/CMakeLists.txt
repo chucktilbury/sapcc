@@ -4,9 +4,9 @@ project(sapcc)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ./)
 
 add_executable(${PROJECT_NAME}
-    utils.c
+    #utils.c
     scanner.c
-    parser.c
+    #parser.c
     main.c
 )
 

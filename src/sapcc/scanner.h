@@ -14,6 +14,11 @@ typedef enum {
     PREFIX,       // "%prefix"
     NAME,         // "%name"
     CODE,         // "%code"
+    SCANNER,      // "%scanner"
+    PARSER,       // "%parser"
+    INCLUDE,      // "%include"
+    SYNTAX,       // "%syntax"
+    REGEX,        // regular expression
     END_OF_INPUT, // file's end
 } TokenType;
 
@@ -27,5 +32,6 @@ typedef struct {
 TokenType get_token(Token* tok);
 TokenType consume_token(Token* tok);
 const char* tok_to_str(TokenType type);
+void open_scanner_file(const char* fname);
 
 #endif /* _SCANNER_H */

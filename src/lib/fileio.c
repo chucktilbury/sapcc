@@ -1,14 +1,11 @@
-
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
+/**
+ * @brief Implement a file IO wrapper.
+ *
+ */
+#include "standard.h"
 #include <string.h>
 
-#include "errors.h"
-#include "fileio.h"
-#include "memory.h"
-#include "strs.h"
+#include "common.h"
 
 struct _file_ptr_ {
     FILE* fp;

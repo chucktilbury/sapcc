@@ -3,9 +3,9 @@
 
 #include <stdbool.h>
 
-#include "utils.h"
 #include "fileio.h"
 #include "strs.h"
+#include "utils.h"
 
 struct pat_elem_t {
     Str str;

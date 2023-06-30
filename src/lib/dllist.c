@@ -7,13 +7,10 @@
  * memory interface module and also supports GC.
  *
  */
-#include <assert.h>
-#include <stdbool.h>
-#include <stdio.h>
+#include "standard.h"
 #include <string.h>
 
-#include "dllist.h"
-#include "memory.h"
+#include "common.h"
 
 /**
  * @brief Private data structure that holds the actual data.
@@ -41,8 +38,8 @@ typedef struct _list_ {
 #define ELEM_SIZE sizeof(ListElem)
 #define NOTNULL(p) assert((p) != NULL)
 #define CAST_LST(p) ((struct _list_*)(p))
-#define IMPORT_ELEM(p)  ((ListElem*)(((unsigned long)(p)) - ELEM_SIZE))
-#define EXPORT_ELEM(p)  ((void*)(((unsigned long)(p)) + ELEM_SIZE))
+#define IMPORT_ELEM(p) ((ListElem*)(((unsigned long)(p)) - ELEM_SIZE))
+#define EXPORT_ELEM(p) ((void*)(((unsigned long)(p)) + ELEM_SIZE))
 #define RETURN_PTR(p) return (DLList)(p);
 
 #define LOCAL_LST(n, p) \
@@ -436,7 +433,7 @@ void* iterate_lst(DLList lst) {
  */
 #ifdef _TEST_LISTS_
 // build string:
-// gcc -Wall -Wextra -D_TEST_LISTS_ -g -o l dllist.c memory.c
+// gcc -Wall -Wextra -D_TEST_LISTS_ -DUSE_GC -g -o l dllist.c memory.c errors.c -lgc
 
 typedef DLList int_lst_t;
 

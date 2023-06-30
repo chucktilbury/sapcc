@@ -13,7 +13,7 @@ PTRLST_HEADER(rule_lst, Rule)
 PTRLST_HEADER(pattern_lst, Pattern)
 PTRLST_HEADER(pat_elem_lst, PatElem)
 
-#include "list.h"
+#include "dllist.h"
 #include "parser.h"
 
 bool str_in_lst(str_lst_t* lst, Str str);
