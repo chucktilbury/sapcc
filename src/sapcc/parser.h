@@ -1,53 +1,50 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
-#include <stdbool.h>
+#include "scanner.h"
+#include "logger.h"
+#include "util.h"
 
-#include "fileio.h"
-#include "strs.h"
-#include "utils.h"
-
-struct pat_elem_t {
-    Str str;
-    bool is_terminal;
-};
-
-struct pattern_t {
-    // str_lst_t* lst;
-    pat_elem_lst_t* elems;
-    Str code; // C code to run upon a pattern match
-};
-
-struct rule_t {
-    Str name;
-    int cols;
-    int rows;
-    bool is_recursive;
-    bool has_nonterms;
-    pattern_lst_t* patterns;
-};
+typedef PtrList NonTermList;
+typedef PtrList TermList;
+typedef PtrList RuleList;
 
 typedef struct {
+    Str* name;
+    bool keep;
+    int ref;
+} Terminal;
 
-    bool finished;
-    int verbo;
+// Rules to match the non-terminal.
+typedef struct {
+    StrList* list;
+    Str* match;
+} Rule;
 
-    // raw names of output files as given by directives
-    Str name;
-    Str prefix;
+typedef struct {
+    Str* name;
+    RuleList* list;
+    Str* pre_match;
+    Str* post_match;
+    int ref;
+} NonTerminal;
 
-    // string lists that will be copied as source code to the output,
-    // as given by directives
-    str_lst_t* code;
+typedef struct {
+    TermList* terminals;
+    NonTermList* non_terminals;
+    StrList* headers;
+    StrList* sources;
+} Parser;
 
-    // the raw rules as presented in the grammar
-    rule_lst_t* rules;
+void init_parser();
+void destroy_parser();
+int parser();
+void dump_parser();
 
-    // list of all terminal and non-terminal words
-    str_lst_t* terminals;
-    str_lst_t* non_terminals;
-} Pstate;
+int get_num_term();
+int get_num_nterm();
 
-Pstate* parse_input(const char* fname);
+extern CmdLine cmd;
+
 
 #endif /* _PARSER_H */

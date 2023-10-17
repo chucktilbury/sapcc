@@ -1,166 +1,531 @@
-#include <stdbool.h>
-#include <stdlib.h>
 
+#include "parser.h"
 #include "errors.h"
-#include "fileio.h"
-#include "memory.h"
-//#include "parser.h"
-#include "scanner.h"
-#include "utils.h"
+#include "logger.h"
 
-static Pstate* create_parser(const char* fname) {
+static Parser* parser_state;
 
-    Pstate* state = _alloc_obj(Pstate);
+static Rule* create_rule() {
 
-    // read_file(fname);
-    open_input_file(fname);
+    Rule* ptr  = _ALLOC_T(Rule);
+    ptr->match = create_string(NULL);
+    ptr->list  = create_str_list();
 
-    consume_token(NULL); // prime the pipeline.
-
-    state->finished      = false;
-    state->verbo         = 5;
-    state->code          = str_lst_create();
-    state->rules         = rule_lst_create();
-    state->prefix        = create_str(NULL);
-    state->name          = create_str(NULL);
-    state->terminals     = str_lst_create();
-    state->non_terminals = str_lst_create();
-    return state;
+    return ptr;
 }
 
-static Pattern* parse_pattern() {
+static void destroy_rule(Rule* ptr) {
 
-    Token tok;
-    Pattern* pat = _alloc_obj(Pattern);
-    pat->elems   = pat_elem_lst_create();
-
-    consume_token(&tok);
-
-    while(tok.type == SYMBOL) {
-        PatElem* pe     = _alloc_obj(PatElem);
-        pe->str         = copy_str(tok.str);
-        pe->is_terminal = false;
-        pat_elem_lst_add(pat->elems, pe);
-        consume_token(&tok);
+    if(ptr != NULL) {
+        destroy_string(ptr->match);
+        destroy_str_list(ptr->list);
+        _FREE(ptr);
     }
-
-    if(get_token(&tok) == BLOCK)
-        pat->code = copy_str(tok.str);
-    else
-        syntax("expected a code block at the end of the pattern, but got %s", tok_to_str(tok.type));
-
-    return pat;
 }
 
-/**
- * @brief Parse a rule. When this is entered, the rule name has been read.
- *
- * @param state
+/*
+ * Rule list functions simplify casting.
  */
-static void parse_rule(Pstate* state) {
+static void add_rule_list(RuleList* ptr, Rule* val) {
 
-    Token tok;
-    get_token(&tok); // capture the rule name
-
-    Rule* rule     = _alloc_obj(Rule);
-    rule->patterns = pattern_lst_create();
-    rule->name     = copy_str(tok.str);
-
-    while(consume_token(&tok) == COLON) {
-        pattern_lst_add(rule->patterns, parse_pattern());
-    }
-    if(pattern_lst_len(rule->patterns) == 0)
-        syntax("expected a rule pattern but got a %s", tok_to_str(get_token(NULL)));
-
-    rule_lst_add(state->rules, rule);
+    add_ptr_list((PtrList*)ptr, (void*)val);
 }
 
-static void parse_verbo(Pstate* state) {
+static void reset_rule_list(RuleList* ptr) {
 
-    TokenType type = consume_token(NULL); // consume the directive name
-    if(type == NUMBER) {
-        Token tok;
-        get_token(&tok);
-        state->verbo = (int)strtol(raw_str(tok.str), NULL, 10);
+    reset_ptr_list((PtrList*)ptr);
+}
+
+static Rule* iterate_rule_list(RuleList* ptr) {
+
+    return (Rule*)iterate_ptr_list((PtrList*)ptr);
+}
+
+static RuleList* create_rule_list() {
+
+    RuleList* ptr = (RuleList*)create_ptr_list();
+    return ptr;
+}
+
+static void destroy_rule_list(RuleList* ptr) {
+
+    Rule* tmp;
+    reset_rule_list(ptr);
+    while(NULL != (tmp = iterate_rule_list(ptr)))
+        destroy_rule(tmp);
+
+    destroy_ptr_list((PtrList*)ptr);
+}
+
+/*
+ * Non Terminal functions.
+ */
+static NonTerminal* create_nonterminal() {
+
+    NonTerminal* ptr = _ALLOC_T(NonTerminal);
+
+    ptr->name  = create_string(NULL);
+    ptr->pre_match = create_string(NULL);
+    ptr->post_match  = create_string(NULL);
+    ptr->list  = create_rule_list();
+
+    return ptr;
+}
+
+static void destroy_nonterminal(NonTerminal* ptr) {
+
+    if(ptr != NULL) {
+        destroy_string(ptr->name);
+        destroy_string(ptr->pre_match);
+        destroy_string(ptr->post_match);
+        destroy_rule_list(ptr->list);
+        _FREE(ptr);
+    }
+}
+
+/*
+ * Non Terminal list functions simplify casting.
+ */
+static void add_nterm_list(NonTermList* ptr, NonTerminal* val) {
+
+    add_ptr_list((PtrList*)ptr, (void*)val);
+}
+
+static void reset_nterm_list(NonTermList* ptr) {
+
+    reset_ptr_list((PtrList*)ptr);
+}
+
+static NonTerminal* iterate_nterm_list(NonTermList* ptr) {
+
+    return (NonTerminal*)iterate_ptr_list((PtrList*)ptr);
+}
+
+static NonTermList* create_nterm_list() {
+
+    NonTermList* ptr = (NonTermList*)create_ptr_list();
+    return ptr;
+}
+
+static void destroy_nterm_list(NonTermList* ptr) {
+
+    NonTerminal* tmp;
+    reset_nterm_list(ptr);
+    while(NULL != (tmp = iterate_nterm_list(ptr)))
+        destroy_nonterminal(tmp);
+
+    destroy_ptr_list((PtrList*)ptr);
+}
+
+/*
+ * Terminal list functions simplify casting.
+ */
+static Terminal* create_terminal() {
+
+    Terminal* ptr = _ALLOC_T(Terminal);
+    ptr->name = create_string(NULL);
+    ptr->keep = false;
+    ptr->ref = 0;
+
+    return ptr;
+}
+
+static void destroy_terminal(Terminal* term) {
+
+    if(term != NULL) {
+        destroy_string(term->name);
+        _FREE(term);
+    }
+}
+
+static void add_term_list(TermList* ptr, Terminal* val) {
+
+    add_ptr_list((PtrList*)ptr, (void*)val);
+}
+
+static void reset_term_list(TermList* ptr) {
+
+    reset_ptr_list((PtrList*)ptr);
+}
+
+static Terminal* iterate_term_list(TermList* ptr) {
+
+    return (Terminal*)iterate_ptr_list((PtrList*)ptr);
+}
+
+static TermList* create_term_list() {
+
+    TermList* ptr = (TermList*)create_ptr_list();
+    return ptr;
+}
+
+static void destroy_term_list(TermList* ptr) {
+
+    assert(ptr != NULL);
+
+    Terminal* tmp;
+    reset_term_list(ptr);
+    while(NULL != (tmp = iterate_term_list(ptr)))
+        destroy_terminal(tmp);
+
+    destroy_ptr_list((PtrList*)ptr);
+}
+
+static int parse_header() {
+
+    int retv = 0;
+
+    if(scan_block() > 0) {
+        add_str_list(parser_state->headers, copy_string(get_token()->str));
     }
     else
-        syntax("expected a number but got a %s", tok_to_str(type));
+        retv++;
 
-    consume_token(NULL); // consume the number
+    return retv;
 }
 
-static void parse_prefix(Pstate* state) {
+static int parse_source() {
 
-    TokenType type = consume_token(NULL); // consume the directive name
-    if(type == STRG) {
-        Token tok;
-        get_token(&tok);
-        state->prefix = copy_str(tok.str);
+    int retv = 0;
+
+    if(scan_block() > 0) {
+        add_str_list(parser_state->sources, copy_string(get_token()->str));
     }
     else
-        syntax("expected a string but got a %s", tok_to_str(type));
+        retv++;
 
-    consume_token(NULL); // consume the string
+    return retv;
 }
 
-static void parse_name(Pstate* state) {
+/*
+ * When this is entered, the "%tokens" token has already been read. It is
+ * followed by a '{' and a series of string that give the names of terminal
+ * symbols. If it has a '@' appended to it, then "keep" is set. At the end of
+ * the symbols, the '}' character appears and is consumed. If there is
+ * something other than these, then a syntax error occurs.
+ */
+static int parse_tokens() {
 
-    TokenType type = consume_token(NULL); // consume the directive name
-    if(type == STRG) {
-        Token tok;
-        get_token(&tok);
-        state->name = copy_str(tok.str);
+    Token* tok = get_token();
+
+    if(tok->type != OBRACE) {
+        syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
+        return 1;
     }
     else
-        syntax("expected a string but got a %s", tok_to_str(type));
+        consume_token();
 
-    consume_token(NULL); // consume the string
-}
-
-static void parse_code(Pstate* state) {
-
-    TokenType type = consume_token(NULL); // consume the directive name
-    if(type == BLOCK) {
-        Token tok;
-        get_token(&tok);
-        str_lst_add(state->code, copy_str(tok.str));
-    }
-    else
-        syntax("expected a code block but got a %s", tok_to_str(type));
-
-    consume_token(NULL); // consume the code block
-}
-
-Pstate* parse_input(const char* fname) {
-
-    Pstate* state = create_parser(fname);
-    bool finished = false;
-
-    while(!finished && get_errors() == 0) {
-        TokenType type = get_token(NULL);
-        switch(type) {
-            case SYMBOL:
-                parse_rule(state);
-                break;
-            case VERBOSITY:
-                parse_verbo(state);
-                break;
-            case NAME:
-                parse_name(state);
-                break;
-            case PREFIX:
-                parse_prefix(state);
-                break;
-            case CODE:
-                parse_code(state);
-                break;
-            case END_OF_INPUT:
-                finished = true;
-                break;
-            default:
-                syntax("expected rule or directive but got %s", tok_to_str(type));
+    while(true) {
+        tok = get_token();
+        if(tok->type == SYMBOL) {
+            Terminal* term = create_terminal();
+            if(strrchr(raw_string(tok->str), '@')) {
+                truncate_string(tok->str, len_string(tok->str)-1);
+                term->keep = true;
+            }
+            term->name = copy_string(tok->str);
+            term->ref = 0;
+            add_term_list(parser_state->terminals, term);
+            consume_token();
+        }
+        else if(tok->type == CBRACE) {
+            consume_token();
+            return 0;
+        }
+        else {
+            syntax_error("expected a terminal SYMBOL or a '}', but got a %s",
+                         tok_type_to_str(tok->type));
+            consume_token();
+            return 1;
         }
     }
 
-    return state;
+    return 0;
+}
+
+/*
+ * When this is entered, a ':' has been read for a rule line.
+ */
+static int parse_rule(NonTerminal* nterm) {
+
+    consume_token(); // consume the COLON
+    Rule* rule = create_rule();
+
+    while(true) {
+        Token* tok = get_token();
+        if(tok->type == SYMBOL) {
+            add_str_list(rule->list, copy_string(tok->str));
+            consume_token();
+        }
+        else if(tok->type == OBRACE) {
+            scan_block();
+            tok = get_token();
+            if(tok->type != BLOCK) {
+                syntax_error("expected a code BLOCK, but got a %s",
+                            tok_type_to_str(tok->type));
+                consume_token();
+                return 1;
+            }
+            else
+                rule->match = copy_string(tok->str);
+
+            consume_token(); // consume the block
+            add_rule_list(nterm->list, rule);
+            return 0;
+        }
+        else {
+            syntax_error("expected a rule SYMBOL or a code BLOCK, but got a %s",
+                         tok_type_to_str(tok->type));
+            consume_token();
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/*
+ * When this is entered, the non-terminal name and it's block have been read.
+ * The next thing is a list of rules that is preceeded with a ':' and ends with
+ * a block of code.
+ */
+static int parse_rules(NonTerminal* nterm) {
+
+    Token* tok;
+
+    while(true) {
+        tok = get_token();
+        if(tok->type == COLON) {
+            if(parse_rule(nterm))
+                return 1;
+        }
+        else if(tok->type == SEMI) {
+            consume_token(); // consume the semicolon
+
+            scan_block();
+            tok = get_token();
+            if(tok->type != BLOCK) {
+                syntax_error("expected a code BLOCK, but got a %s",
+                            tok_type_to_str(tok->type));
+                consume_token();
+                return 1;
+            }
+            else
+                nterm->post_match = copy_string(tok->str);
+
+            consume_token(); // consume the block
+            return 0;
+        }
+        else {
+            syntax_error("expected a ':' or a ';', but got a %s",
+                         tok_type_to_str(tok->type));
+            consume_token();
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/*
+ * When this is entered, the "%grammer" token has already been read and
+ * consumed. The next token is a '{'. After that, the nonterminal and the rest
+ * of the syntax:
+ *
+ * nonterminal { // block of C code }
+ *    : rule { // block of C code }
+ *    ...
+ *    ; { block of C code }
+ *
+ * ...
+ *
+ * The %grammar block is ended with a '}' token.
+ */
+static int parse_grammar() {
+
+    Token* tok = get_token();
+
+    if(tok->type != OBRACE) {
+        syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
+        return 1;
+    }
+    else
+        consume_token();
+
+    while(true) {
+        tok = get_token();
+        if(tok->type == SYMBOL) {
+            NonTerminal* ptr = create_nonterminal();
+            ptr->name = copy_string(tok->str);
+            consume_token();
+
+            scan_block();
+            tok = get_token();
+            if(tok->type != BLOCK) {
+                syntax_error("expected a code BLOCK, but got a %s",
+                            tok_type_to_str(tok->type));
+                consume_token();
+                return 1;
+            }
+            else
+                ptr->pre_match = copy_string(tok->str);
+
+            consume_token();
+            // get the rule list, including the closure.
+            if(parse_rules(ptr)) {
+                return 1;
+            }
+            // add it to the list
+            add_nterm_list(parser_state->non_terminals, ptr);
+        }
+        else if(tok->type == CBRACE) {
+            consume_token();
+            return 0;
+        }
+        else {
+            syntax_error("expected a non-terminal SYMBOL or a '}', but got a %s",
+                         tok_type_to_str(tok->type));
+            consume_token();
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static void dump_terminal(Terminal* term) {
+
+    printf("\t%s:\t", raw_string(term->name));
+    printf("keep:%s:\t", term->keep? "true ": "false");
+    printf("references:%d\n", term->ref);
+}
+
+static void dump_rules(NonTerminal* nterm) {
+
+    Rule* rule;
+    reset_rule_list(nterm->list);
+    while(NULL != (rule = iterate_rule_list(nterm->list))) {
+        printf("\t: ");
+        Str* s;
+        reset_str_list(rule->list);
+        while(NULL != (s = iterate_str_list(rule->list))) {
+            printf("%s ", raw_string(s));
+        }
+        printf("%s\n", raw_string(rule->match));
+    }
+}
+
+static void dump_nonterminal(NonTerminal* nterm) {
+
+    printf("%s\n", raw_string(nterm->name));
+    printf("\tpre-match: %s\n", raw_string(nterm->pre_match));
+    printf("\tpost-match: %s\n", raw_string(nterm->post_match));
+    dump_rules(nterm);
+    printf("\treferences:%d\n\n", nterm->ref);
+}
+
+void dump_parser() {
+
+    Str* str;
+    Terminal* term;
+    NonTerminal* nterm;
+
+    printf("dump the parser\n");
+
+    reset_str_list(parser_state->headers);
+    printf("HEADERS:\n");
+    while(NULL != (str = iterate_str_list(parser_state->headers)))
+        printf("%s\n", raw_string(str));
+
+    reset_str_list(parser_state->sources);
+    printf("\nSOURCES:\n");
+    while(NULL != (str = iterate_str_list(parser_state->sources)))
+        printf("%s\n", raw_string(str));
+
+    reset_term_list(parser_state->terminals);
+    printf("\nTERMINALS:\n");
+    while(NULL != (term = iterate_term_list(parser_state->terminals)))
+        dump_terminal(term);
+
+    reset_nterm_list(parser_state->non_terminals);
+    printf("\nNON-TERMINALS:\n");
+    while(NULL != (nterm = iterate_nterm_list(parser_state->non_terminals)))
+        dump_nonterminal(nterm);
+
+}
+
+/*
+ * Public Interface
+ */
+void init_parser() {
+
+    parser_state = _ALLOC_T(Parser);
+
+    init_scanner(get_cmd_raw(cmd, "file"));
+
+    parser_state->terminals = create_term_list();
+    parser_state->non_terminals = create_nterm_list();
+    parser_state->headers = create_str_list();
+    parser_state->sources = create_str_list();
+}
+
+void destroy_parser() {
+
+    destroy_term_list(parser_state->terminals);
+    destroy_nterm_list(parser_state->non_terminals);
+    destroy_str_list(parser_state->headers);
+    destroy_str_list(parser_state->sources);
+    _FREE(parser_state);
+}
+
+int parser() {
+
+    Token* tok;
+    int retv = 0;
+
+    tok = get_token();
+    while(tok->type != END_OF_INPUT) {
+        switch(tok->type) {
+            case GRAMMAR:
+                consume_token();
+                retv += parse_grammar();
+                break;
+            case TOKENS:
+                consume_token();
+                retv += parse_tokens();
+                break;
+            case SOURCE:
+                consume_token();
+                retv += parse_source();
+                consume_token();
+                break;
+            case HEADER:
+                consume_token();
+                retv += parse_header();
+                consume_token();
+                break;
+            case END_OF_INPUT:
+                // do nothing...
+                break;
+            default:
+                syntax_error("expected a directive but got a %s", tok_type_to_str(tok->type));
+                consume_token();
+                retv++;
+                break;
+        }
+
+        if(retv > 10)
+            break;
+        tok = get_token();
+    }
+
+    return retv;
+}
+
+int get_num_term() {
+    return parser_state->terminals->len;
+}
+
+int get_num_nterm() {
+    return parser_state->non_terminals->len;
 }

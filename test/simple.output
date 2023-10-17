@@ -1,0 +1,4825 @@
+State 67 conflicts: 2 reduce/reduce
+
+
+Grammar
+
+    0 $accept: module $end
+
+    1 module: module_body
+
+    2 module_element: namespace_element
+    3               | import_statement
+    4               | entry_definition
+
+    5 module_body: module_element
+    6            | module_body module_element
+
+    7 entry_definition: ENTRY func_block
+
+    8 scope: PUBLIC
+    9      | PRIVATE
+   10      | PROTECTED
+
+   11 type_name: compound_name
+   12          | FLOAT
+   13          | INTEGER
+   14          | UNSIGNED
+   15          | STRING
+   16          | DICT
+   17          | LIST
+   18          | BOOLEAN
+   19          | NOTHING
+
+   20 compound_name: SYMBOL
+   21              | compound_name DOT SYMBOL
+
+   22 compound_reference: compound_reference_element
+   23                   | compound_reference DOT compound_reference_element
+
+   24 compound_reference_element: SYMBOL
+   25                           | func_reference
+   26                           | array_reference
+
+   27 formatted_string: STRG_CONST
+   28                 | STRG_CONST OPAREN CPAREN
+   29                 | STRG_CONST OPAREN expr_list CPAREN
+
+   30 func_reference: compound_name OPAREN CPAREN
+   31               | compound_name OPAREN expr_list CPAREN
+
+   32 array_reference: compound_name array_reference_list
+
+   33 array_reference_list: OBRACE expression CBRACE
+   34                     | array_reference_list OBRACE expression CBRACE
+
+   35 import_statement: IMPORT compound_name
+   36                 | IMPORT compound_name AS SYMBOL
+
+   37 namespace_definition: NAMESPACE SYMBOL OBLOCK namespace_block CBLOCK
+
+   38 namespace_block: namespace_element
+   39                | namespace_block namespace_element
+
+   40 namespace_element: namespace_definition
+   41                  | class_definition
+   42                  | func_definition
+   43                  | ctor_definition
+   44                  | dtor_definition
+   45                  | var_declaration
+   46                  | scope
+
+   47 class_definition: CLASS SYMBOL class_parameters class_block
+
+   48 class_parameters: ε
+   49                 | OPAREN CPAREN
+   50                 | OPAREN compound_name CPAREN
+
+   51 class_block: OBLOCK CBLOCK
+   52            | OBLOCK class_body CBLOCK
+
+   53 class_body: class_body_element
+   54           | class_body class_body_element
+
+   55 class_body_element: var_declaration
+   56                   | func_declaration
+   57                   | scope
+
+   58 var_declaration: type_name SYMBOL
+
+   59 func_declaration: type_name SYMBOL func_decl_parms
+   60                 | CREATE func_decl_parms
+   61                 | DESTROY
+
+   62 func_decl_parms: OPAREN CPAREN
+   63                | OPAREN func_decl_parms_list CPAREN
+
+   64 func_decl_parms_list: func_decl_parms_elem
+   65                     | func_decl_parms_list COMMA func_decl_parms_elem
+
+   66 func_decl_parms_elem: type_name SYMBOL
+
+   67 bool_literal: TRUE
+   68             | FALSE
+
+   69 primary: compound_reference
+   70        | const_expression
+   71        | OPAREN expression CPAREN
+
+   72 const_expression: formatted_string
+   73                 | bool_literal
+   74                 | FLOAT_CONST
+   75                 | INT_CONST
+   76                 | UNSIGNED_CONST
+
+   77 expression: primary
+   78           | expression AND expression
+   79           | expression OR expression
+   80           | expression EQU expression
+   81           | expression NEQU expression
+   82           | expression LORE expression
+   83           | expression GORE expression
+   84           | expression OPOINT expression
+   85           | expression CPOINT expression
+   86           | expression ADD expression
+   87           | expression SUB expression
+   88           | expression MUL expression
+   89           | expression DIV expression
+   90           | expression MOD expression
+   91           | expression POW expression
+   92           | NOT expression
+   93           | SUB expression
+   94           | cast_expr
+
+   95 cast_expr: OPOINT type_name CPOINT expression
+
+   96 expr_list: expression
+   97          | expr_list COMMA expression
+
+   98 member: SYMBOL COLON
+
+   99 func_definition: type_name member SYMBOL func_decl_parms func_block
+
+  100 ctor_definition: member CREATE func_decl_parms func_block
+
+  101 dtor_definition: member DESTROY func_block
+
+  102 func_block: OBLOCK CBLOCK
+  103           | OBLOCK func_content CBLOCK
+
+  104 assignment_oper: ASSIGN
+  105                | ADD_ASSIGN
+  106                | SUB_ASSIGN
+  107                | MUL_ASSIGN
+  108                | DIV_ASSIGN
+  109                | MOD_ASSIGN
+
+  110 assignment: assignment_oper expression
+
+  111 data_definition: var_declaration
+  112                | var_declaration assignment
+
+  113 func_content: func_content_elem
+  114             | func_content func_content_elem
+
+  115 func_content_elem: func_block
+  116                  | data_definition
+  117                  | compound_reference
+  118                  | compound_reference assignment
+  119                  | if_else_clause
+  120                  | while_clause
+  121                  | do_clause
+  122                  | for_clause
+  123                  | switch_case_clause
+  124                  | try_except_clause
+  125                  | return_statement
+  126                  | raise_statement
+  127                  | exit_statement
+  128                  | yield_statement
+  129                  | trace_statement
+  130                  | print_statement
+  131                  | break_statement
+  132                  | cont_statement
+  133                  | inline_block
+
+  134 inline_block: INLINE formatted_string
+
+  135 print_statement: PRINT
+  136                | PRINT OPAREN CPAREN
+  137                | PRINT OPAREN formatted_string CPAREN
+
+  138 break_statement: BREAK
+
+  139 cont_statement: CONTINUE
+
+  140 trace_statement: TRACE
+  141                | TRACE OPAREN CPAREN
+  142                | TRACE OPAREN formatted_string CPAREN
+
+  143 yield_statement: YIELD OPAREN SYMBOL CPAREN
+
+  144 exit_statement: EXIT OPAREN expression CPAREN
+
+  145 return_statement: RETURN
+  146                 | RETURN OPAREN CPAREN
+  147                 | RETURN OPAREN expression CPAREN
+
+  148 raise_statement: RAISE OPAREN compound_name CPAREN
+
+  149 if_else_clause: if_clause
+  150               | if_clause else_clause_list
+  151               | if_clause else_clause_list else_clause_final
+
+  152 if_clause: IF OPAREN expression CPAREN func_block
+
+  153 else_clause: ELSE OPAREN expression CPAREN func_block
+
+  154 else_clause_list: else_clause
+  155                 | else_clause_list else_clause
+
+  156 else_clause_final: ELSE OPAREN CPAREN func_block
+  157                  | ELSE func_block
+
+  158 while_clause: WHILE OPAREN expression CPAREN func_block
+
+  159 do_clause: DO func_block WHILE OPAREN expression CPAREN
+
+  160 for_clause: FOR OPAREN SYMBOL IN compound_reference CPAREN func_block
+  161           | FOR OPAREN SYMBOL IN expression TO expression CPAREN func_block
+
+  162 switch_case_clause: switch_clause case_clause_list case_clause_final
+
+  163 switch_clause: SWITCH OPAREN expression CPAREN OBLOCK
+
+  164 case_clause: CASE OPAREN const_expression CPAREN func_block
+
+  165 case_clause_list: case_clause
+  166                 | case_clause_list case_clause
+
+  167 case_clause_final: CBLOCK
+  168                  | DEFAULT func_block CBLOCK
+
+  169 try_except_clause: try_clause except_clause_list except_clause_final
+
+  170 try_clause: TRY func_block
+
+  171 except_clause: EXCEPT OPAREN compound_name CPAREN func_block
+
+  172 except_clause_list: except_clause
+  173                   | except_clause_list except_clause
+
+  174 except_clause_final: EXCEPT OPAREN CPAREN func_block
+  175                    | EXCEPT func_block
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    error (256)
+    NAMESPACE (258) 37
+    CLASS (259) 47
+    CREATE (260) 60 100
+    DESTROY (261) 61 101
+    IF (262) 152
+    ELSE (263) 153 156 157
+    WHILE (264) 158 159
+    DO (265) 159
+    FOR (266) 160 161
+    IN (267) 160 161
+    TO (268) 161
+    TRY (269) 170
+    EXCEPT (270) 171 174 175
+    RAISE (271) 148
+    RETURN (272) 145 146 147
+    EXIT (273) 144
+    SWITCH (274) 163
+    CASE (275) 164
+    YIELD (276) 143
+    TRACE (277) 140 141 142
+    PRINT (278) 135 136 137
+    IMPORT (279) 35 36
+    TRUE (280) 67
+    FALSE (281) 68
+    BREAK (282) 138
+    CONTINUE (283) 139
+    INLINE (284) 134
+    ENTRY (285) 7
+    DEFAULT (286) 168
+    DOT (287) 21 23
+    COMMA (288) 65 97
+    COLON (289) 98
+    AS (290) 36
+    CPAREN (291) 28 29 30 31 49 50 62 63 71 136 137 141 142 143 144 146 147 148 152 153 156 158 159 160 161 163 164 171 174
+    OPAREN (292) 28 29 30 31 49 50 62 63 71 136 137 141 142 143 144 146 147 148 152 153 156 158 159 160 161 163 164 171 174
+    OBLOCK (293) 37 51 52 102 103 163
+    CBLOCK (294) 37 51 52 102 103 167 168
+    OBRACE (295) 33 34
+    CBRACE (296) 33 34
+    STRG_CONST <str> (297) 27 28 29
+    SYMBOL <str> (298) 20 21 24 36 37 47 58 59 66 98 99 143 160 161
+    FLOAT_CONST <fnum> (299) 74
+    INT_CONST <inum> (300) 75
+    UNSIGNED_CONST <unum> (301) 76
+    PUBLIC <symbol> (302) 8
+    PRIVATE <symbol> (303) 9
+    PROTECTED <symbol> (304) 10
+    INTEGER <symbol> (305) 13
+    UNSIGNED <symbol> (306) 14
+    FLOAT <symbol> (307) 12
+    STRING <symbol> (308) 15
+    DICT <symbol> (309) 16
+    LIST <symbol> (310) 17
+    BOOLEAN <symbol> (311) 18
+    NOTHING <symbol> (312) 19
+    ASSIGN <symbol> (313) 104
+    ADD <symbol> (314) 86
+    SUB <symbol> (315) 87 93
+    MUL <symbol> (316) 88
+    DIV <symbol> (317) 89
+    MOD <symbol> (318) 90
+    POW <symbol> (319) 91
+    NOT <symbol> (320) 92
+    OR <symbol> (321) 79
+    AND <symbol> (322) 78
+    EQU <symbol> (323) 80
+    NEQU <symbol> (324) 81
+    LORE <symbol> (325) 82
+    GORE <symbol> (326) 83
+    OPOINT <symbol> (327) 84 95
+    CPOINT <symbol> (328) 85 95
+    ADD_ASSIGN <symbol> (329) 105
+    SUB_ASSIGN <symbol> (330) 106
+    MUL_ASSIGN <symbol> (331) 107
+    DIV_ASSIGN <symbol> (332) 108
+    MOD_ASSIGN <symbol> (333) 109
+    CAST (334)
+    UNARY (335)
+
+
+Nonterminals, with rules where they appear
+
+    $accept (81)
+        on left: 0
+    module (82)
+        on left: 1
+        on right: 0
+    module_element (83)
+        on left: 2 3 4
+        on right: 5 6
+    module_body (84)
+        on left: 5 6
+        on right: 1 6
+    entry_definition (85)
+        on left: 7
+        on right: 4
+    scope (86)
+        on left: 8 9 10
+        on right: 46 57
+    type_name (87)
+        on left: 11 12 13 14 15 16 17 18 19
+        on right: 58 59 66 95 99
+    compound_name <sym> (88)
+        on left: 20 21
+        on right: 11 21 30 31 32 35 36 50 148 171
+    compound_reference (89)
+        on left: 22 23
+        on right: 23 69 117 118 160
+    compound_reference_element (90)
+        on left: 24 25 26
+        on right: 22 23
+    formatted_string <str> (91)
+        on left: 27 28 29
+        on right: 72 134 137 142
+    func_reference (92)
+        on left: 30 31
+        on right: 25
+    array_reference (93)
+        on left: 32
+        on right: 26
+    array_reference_list (94)
+        on left: 33 34
+        on right: 32 34
+    import_statement (95)
+        on left: 35 36
+        on right: 3
+    namespace_definition (96)
+        on left: 37
+        on right: 40
+    namespace_block (97)
+        on left: 38 39
+        on right: 37 39
+    namespace_element (98)
+        on left: 40 41 42 43 44 45 46
+        on right: 2 38 39
+    class_definition (99)
+        on left: 47
+        on right: 41
+    class_parameters (100)
+        on left: 48 49 50
+        on right: 47
+    class_block (101)
+        on left: 51 52
+        on right: 47
+    class_body (102)
+        on left: 53 54
+        on right: 52 54
+    class_body_element (103)
+        on left: 55 56 57
+        on right: 53 54
+    var_declaration (104)
+        on left: 58
+        on right: 45 55 111 112
+    func_declaration (105)
+        on left: 59 60 61
+        on right: 56
+    func_decl_parms (106)
+        on left: 62 63
+        on right: 59 60 99 100
+    func_decl_parms_list (107)
+        on left: 64 65
+        on right: 63 65
+    func_decl_parms_elem (108)
+        on left: 66
+        on right: 64 65
+    bool_literal (109)
+        on left: 67 68
+        on right: 73
+    primary (110)
+        on left: 69 70 71
+        on right: 77
+    const_expression (111)
+        on left: 72 73 74 75 76
+        on right: 70 164
+    expression (112)
+        on left: 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94
+        on right: 33 34 71 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 95 96 97 110 144 147 152 153 158 159 161 163
+    cast_expr (113)
+        on left: 95
+        on right: 94
+    expr_list (114)
+        on left: 96 97
+        on right: 29 31 97
+    member (115)
+        on left: 98
+        on right: 99 100 101
+    func_definition (116)
+        on left: 99
+        on right: 42
+    ctor_definition (117)
+        on left: 100
+        on right: 43
+    dtor_definition (118)
+        on left: 101
+        on right: 44
+    func_block (119)
+        on left: 102 103
+        on right: 7 99 100 101 115 152 153 156 157 158 159 160 161 164 168 170 171 174 175
+    assignment_oper (120)
+        on left: 104 105 106 107 108 109
+        on right: 110
+    assignment (121)
+        on left: 110
+        on right: 112 118
+    data_definition (122)
+        on left: 111 112
+        on right: 116
+    func_content (123)
+        on left: 113 114
+        on right: 103 114
+    func_content_elem (124)
+        on left: 115 116 117 118 119 120 121 122 123 124 125 126 127 128 129 130 131 132 133
+        on right: 113 114
+    inline_block (125)
+        on left: 134
+        on right: 133
+    print_statement (126)
+        on left: 135 136 137
+        on right: 130
+    break_statement (127)
+        on left: 138
+        on right: 131
+    cont_statement (128)
+        on left: 139
+        on right: 132
+    trace_statement (129)
+        on left: 140 141 142
+        on right: 129
+    yield_statement (130)
+        on left: 143
+        on right: 128
+    exit_statement (131)
+        on left: 144
+        on right: 127
+    return_statement (132)
+        on left: 145 146 147
+        on right: 125
+    raise_statement (133)
+        on left: 148
+        on right: 126
+    if_else_clause (134)
+        on left: 149 150 151
+        on right: 119
+    if_clause (135)
+        on left: 152
+        on right: 149 150 151
+    else_clause (136)
+        on left: 153
+        on right: 154 155
+    else_clause_list (137)
+        on left: 154 155
+        on right: 150 151 155
+    else_clause_final (138)
+        on left: 156 157
+        on right: 151
+    while_clause (139)
+        on left: 158
+        on right: 120
+    do_clause (140)
+        on left: 159
+        on right: 121
+    for_clause (141)
+        on left: 160 161
+        on right: 122
+    switch_case_clause (142)
+        on left: 162
+        on right: 123
+    switch_clause (143)
+        on left: 163
+        on right: 162
+    case_clause (144)
+        on left: 164
+        on right: 165 166
+    case_clause_list (145)
+        on left: 165 166
+        on right: 162 166
+    case_clause_final (146)
+        on left: 167 168
+        on right: 162
+    try_except_clause (147)
+        on left: 169
+        on right: 124
+    try_clause (148)
+        on left: 170
+        on right: 169
+    except_clause (149)
+        on left: 171
+        on right: 172 173
+    except_clause_list (150)
+        on left: 172 173
+        on right: 169 173
+    except_clause_final (151)
+        on left: 174 175
+        on right: 169
+
+
+State 0
+
+    0 $accept: • module $end
+
+    NAMESPACE  shift, and go to state 1
+    CLASS      shift, and go to state 2
+    IMPORT     shift, and go to state 3
+    ENTRY      shift, and go to state 4
+    SYMBOL     shift, and go to state 5
+    PUBLIC     shift, and go to state 6
+    PRIVATE    shift, and go to state 7
+    PROTECTED  shift, and go to state 8
+    INTEGER    shift, and go to state 9
+    UNSIGNED   shift, and go to state 10
+    FLOAT      shift, and go to state 11
+    STRING     shift, and go to state 12
+    DICT       shift, and go to state 13
+    LIST       shift, and go to state 14
+    BOOLEAN    shift, and go to state 15
+    NOTHING    shift, and go to state 16
+
+    module                go to state 17
+    module_element        go to state 18
+    module_body           go to state 19
+    entry_definition      go to state 20
+    scope                 go to state 21
+    type_name             go to state 22
+    compound_name         go to state 23
+    import_statement      go to state 24
+    namespace_definition  go to state 25
+    namespace_element     go to state 26
+    class_definition      go to state 27
+    var_declaration       go to state 28
+    member                go to state 29
+    func_definition       go to state 30
+    ctor_definition       go to state 31
+    dtor_definition       go to state 32
+
+
+State 1
+
+   37 namespace_definition: NAMESPACE • SYMBOL OBLOCK namespace_block CBLOCK
+
+    SYMBOL  shift, and go to state 33
+
+
+State 2
+
+   47 class_definition: CLASS • SYMBOL class_parameters class_block
+
+    SYMBOL  shift, and go to state 34
+
+
+State 3
+
+   35 import_statement: IMPORT • compound_name
+   36                 | IMPORT • compound_name AS SYMBOL
+
+    SYMBOL  shift, and go to state 35
+
+    compound_name  go to state 36
+
+
+State 4
+
+    7 entry_definition: ENTRY • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 38
+
+
+State 5
+
+   20 compound_name: SYMBOL •
+   98 member: SYMBOL • COLON
+
+    COLON  shift, and go to state 39
+
+    $default  reduce using rule 20 (compound_name)
+
+
+State 6
+
+    8 scope: PUBLIC •
+
+    $default  reduce using rule 8 (scope)
+
+
+State 7
+
+    9 scope: PRIVATE •
+
+    $default  reduce using rule 9 (scope)
+
+
+State 8
+
+   10 scope: PROTECTED •
+
+    $default  reduce using rule 10 (scope)
+
+
+State 9
+
+   13 type_name: INTEGER •
+
+    $default  reduce using rule 13 (type_name)
+
+
+State 10
+
+   14 type_name: UNSIGNED •
+
+    $default  reduce using rule 14 (type_name)
+
+
+State 11
+
+   12 type_name: FLOAT •
+
+    $default  reduce using rule 12 (type_name)
+
+
+State 12
+
+   15 type_name: STRING •
+
+    $default  reduce using rule 15 (type_name)
+
+
+State 13
+
+   16 type_name: DICT •
+
+    $default  reduce using rule 16 (type_name)
+
+
+State 14
+
+   17 type_name: LIST •
+
+    $default  reduce using rule 17 (type_name)
+
+
+State 15
+
+   18 type_name: BOOLEAN •
+
+    $default  reduce using rule 18 (type_name)
+
+
+State 16
+
+   19 type_name: NOTHING •
+
+    $default  reduce using rule 19 (type_name)
+
+
+State 17
+
+    0 $accept: module • $end
+
+    $end  shift, and go to state 40
+
+
+State 18
+
+    5 module_body: module_element •
+
+    $default  reduce using rule 5 (module_body)
+
+
+State 19
+
+    1 module: module_body •
+    6 module_body: module_body • module_element
+
+    NAMESPACE  shift, and go to state 1
+    CLASS      shift, and go to state 2
+    IMPORT     shift, and go to state 3
+    ENTRY      shift, and go to state 4
+    SYMBOL     shift, and go to state 5
+    PUBLIC     shift, and go to state 6
+    PRIVATE    shift, and go to state 7
+    PROTECTED  shift, and go to state 8
+    INTEGER    shift, and go to state 9
+    UNSIGNED   shift, and go to state 10
+    FLOAT      shift, and go to state 11
+    STRING     shift, and go to state 12
+    DICT       shift, and go to state 13
+    LIST       shift, and go to state 14
+    BOOLEAN    shift, and go to state 15
+    NOTHING    shift, and go to state 16
+
+    $default  reduce using rule 1 (module)
+
+    module_element        go to state 41
+    entry_definition      go to state 20
+    scope                 go to state 21
+    type_name             go to state 22
+    compound_name         go to state 23
+    import_statement      go to state 24
+    namespace_definition  go to state 25
+    namespace_element     go to state 26
+    class_definition      go to state 27
+    var_declaration       go to state 28
+    member                go to state 29
+    func_definition       go to state 30
+    ctor_definition       go to state 31
+    dtor_definition       go to state 32
+
+
+State 20
+
+    4 module_element: entry_definition •
+
+    $default  reduce using rule 4 (module_element)
+
+
+State 21
+
+   46 namespace_element: scope •
+
+    $default  reduce using rule 46 (namespace_element)
+
+
+State 22
+
+   58 var_declaration: type_name • SYMBOL
+   99 func_definition: type_name • member SYMBOL func_decl_parms func_block
+
+    SYMBOL  shift, and go to state 42
+
+    member  go to state 43
+
+
+State 23
+
+   11 type_name: compound_name •
+   21 compound_name: compound_name • DOT SYMBOL
+
+    DOT  shift, and go to state 44
+
+    $default  reduce using rule 11 (type_name)
+
+
+State 24
+
+    3 module_element: import_statement •
+
+    $default  reduce using rule 3 (module_element)
+
+
+State 25
+
+   40 namespace_element: namespace_definition •
+
+    $default  reduce using rule 40 (namespace_element)
+
+
+State 26
+
+    2 module_element: namespace_element •
+
+    $default  reduce using rule 2 (module_element)
+
+
+State 27
+
+   41 namespace_element: class_definition •
+
+    $default  reduce using rule 41 (namespace_element)
+
+
+State 28
+
+   45 namespace_element: var_declaration •
+
+    $default  reduce using rule 45 (namespace_element)
+
+
+State 29
+
+  100 ctor_definition: member • CREATE func_decl_parms func_block
+  101 dtor_definition: member • DESTROY func_block
+
+    CREATE   shift, and go to state 45
+    DESTROY  shift, and go to state 46
+
+
+State 30
+
+   42 namespace_element: func_definition •
+
+    $default  reduce using rule 42 (namespace_element)
+
+
+State 31
+
+   43 namespace_element: ctor_definition •
+
+    $default  reduce using rule 43 (namespace_element)
+
+
+State 32
+
+   44 namespace_element: dtor_definition •
+
+    $default  reduce using rule 44 (namespace_element)
+
+
+State 33
+
+   37 namespace_definition: NAMESPACE SYMBOL • OBLOCK namespace_block CBLOCK
+
+    OBLOCK  shift, and go to state 47
+
+
+State 34
+
+   47 class_definition: CLASS SYMBOL • class_parameters class_block
+
+    OPAREN  shift, and go to state 48
+
+    $default  reduce using rule 48 (class_parameters)
+
+    class_parameters  go to state 49
+
+
+State 35
+
+   20 compound_name: SYMBOL •
+
+    $default  reduce using rule 20 (compound_name)
+
+
+State 36
+
+   21 compound_name: compound_name • DOT SYMBOL
+   35 import_statement: IMPORT compound_name •
+   36                 | IMPORT compound_name • AS SYMBOL
+
+    DOT  shift, and go to state 44
+    AS   shift, and go to state 50
+
+    $default  reduce using rule 35 (import_statement)
+
+
+State 37
+
+  102 func_block: OBLOCK • CBLOCK
+  103           | OBLOCK • func_content CBLOCK
+
+    IF        shift, and go to state 51
+    WHILE     shift, and go to state 52
+    DO        shift, and go to state 53
+    FOR       shift, and go to state 54
+    TRY       shift, and go to state 55
+    RAISE     shift, and go to state 56
+    RETURN    shift, and go to state 57
+    EXIT      shift, and go to state 58
+    SWITCH    shift, and go to state 59
+    YIELD     shift, and go to state 60
+    TRACE     shift, and go to state 61
+    PRINT     shift, and go to state 62
+    BREAK     shift, and go to state 63
+    CONTINUE  shift, and go to state 64
+    INLINE    shift, and go to state 65
+    OBLOCK    shift, and go to state 37
+    CBLOCK    shift, and go to state 66
+    SYMBOL    shift, and go to state 67
+    INTEGER   shift, and go to state 9
+    UNSIGNED  shift, and go to state 10
+    FLOAT     shift, and go to state 11
+    STRING    shift, and go to state 12
+    DICT      shift, and go to state 13
+    LIST      shift, and go to state 14
+    BOOLEAN   shift, and go to state 15
+    NOTHING   shift, and go to state 16
+
+    type_name                   go to state 68
+    compound_name               go to state 69
+    compound_reference          go to state 70
+    compound_reference_element  go to state 71
+    func_reference              go to state 72
+    array_reference             go to state 73
+    var_declaration             go to state 74
+    func_block                  go to state 75
+    data_definition             go to state 76
+    func_content                go to state 77
+    func_content_elem           go to state 78
+    inline_block                go to state 79
+    print_statement             go to state 80
+    break_statement             go to state 81
+    cont_statement              go to state 82
+    trace_statement             go to state 83
+    yield_statement             go to state 84
+    exit_statement              go to state 85
+    return_statement            go to state 86
+    raise_statement             go to state 87
+    if_else_clause              go to state 88
+    if_clause                   go to state 89
+    while_clause                go to state 90
+    do_clause                   go to state 91
+    for_clause                  go to state 92
+    switch_case_clause          go to state 93
+    switch_clause               go to state 94
+    try_except_clause           go to state 95
+    try_clause                  go to state 96
+
+
+State 38
+
+    7 entry_definition: ENTRY func_block •
+
+    $default  reduce using rule 7 (entry_definition)
+
+
+State 39
+
+   98 member: SYMBOL COLON •
+
+    $default  reduce using rule 98 (member)
+
+
+State 40
+
+    0 $accept: module $end •
+
+    $default  accept
+
+
+State 41
+
+    6 module_body: module_body module_element •
+
+    $default  reduce using rule 6 (module_body)
+
+
+State 42
+
+   58 var_declaration: type_name SYMBOL •
+   98 member: SYMBOL • COLON
+
+    COLON  shift, and go to state 39
+
+    $default  reduce using rule 58 (var_declaration)
+
+
+State 43
+
+   99 func_definition: type_name member • SYMBOL func_decl_parms func_block
+
+    SYMBOL  shift, and go to state 97
+
+
+State 44
+
+   21 compound_name: compound_name DOT • SYMBOL
+
+    SYMBOL  shift, and go to state 98
+
+
+State 45
+
+  100 ctor_definition: member CREATE • func_decl_parms func_block
+
+    OPAREN  shift, and go to state 99
+
+    func_decl_parms  go to state 100
+
+
+State 46
+
+  101 dtor_definition: member DESTROY • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 101
+
+
+State 47
+
+   37 namespace_definition: NAMESPACE SYMBOL OBLOCK • namespace_block CBLOCK
+
+    NAMESPACE  shift, and go to state 1
+    CLASS      shift, and go to state 2
+    SYMBOL     shift, and go to state 5
+    PUBLIC     shift, and go to state 6
+    PRIVATE    shift, and go to state 7
+    PROTECTED  shift, and go to state 8
+    INTEGER    shift, and go to state 9
+    UNSIGNED   shift, and go to state 10
+    FLOAT      shift, and go to state 11
+    STRING     shift, and go to state 12
+    DICT       shift, and go to state 13
+    LIST       shift, and go to state 14
+    BOOLEAN    shift, and go to state 15
+    NOTHING    shift, and go to state 16
+
+    scope                 go to state 21
+    type_name             go to state 22
+    compound_name         go to state 23
+    namespace_definition  go to state 25
+    namespace_block       go to state 102
+    namespace_element     go to state 103
+    class_definition      go to state 27
+    var_declaration       go to state 28
+    member                go to state 29
+    func_definition       go to state 30
+    ctor_definition       go to state 31
+    dtor_definition       go to state 32
+
+
+State 48
+
+   49 class_parameters: OPAREN • CPAREN
+   50                 | OPAREN • compound_name CPAREN
+
+    CPAREN  shift, and go to state 104
+    SYMBOL  shift, and go to state 35
+
+    compound_name  go to state 105
+
+
+State 49
+
+   47 class_definition: CLASS SYMBOL class_parameters • class_block
+
+    OBLOCK  shift, and go to state 106
+
+    class_block  go to state 107
+
+
+State 50
+
+   36 import_statement: IMPORT compound_name AS • SYMBOL
+
+    SYMBOL  shift, and go to state 108
+
+
+State 51
+
+  152 if_clause: IF • OPAREN expression CPAREN func_block
+
+    OPAREN  shift, and go to state 109
+
+
+State 52
+
+  158 while_clause: WHILE • OPAREN expression CPAREN func_block
+
+    OPAREN  shift, and go to state 110
+
+
+State 53
+
+  159 do_clause: DO • func_block WHILE OPAREN expression CPAREN
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 111
+
+
+State 54
+
+  160 for_clause: FOR • OPAREN SYMBOL IN compound_reference CPAREN func_block
+  161           | FOR • OPAREN SYMBOL IN expression TO expression CPAREN func_block
+
+    OPAREN  shift, and go to state 112
+
+
+State 55
+
+  170 try_clause: TRY • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 113
+
+
+State 56
+
+  148 raise_statement: RAISE • OPAREN compound_name CPAREN
+
+    OPAREN  shift, and go to state 114
+
+
+State 57
+
+  145 return_statement: RETURN •
+  146                 | RETURN • OPAREN CPAREN
+  147                 | RETURN • OPAREN expression CPAREN
+
+    OPAREN  shift, and go to state 115
+
+    $default  reduce using rule 145 (return_statement)
+
+
+State 58
+
+  144 exit_statement: EXIT • OPAREN expression CPAREN
+
+    OPAREN  shift, and go to state 116
+
+
+State 59
+
+  163 switch_clause: SWITCH • OPAREN expression CPAREN OBLOCK
+
+    OPAREN  shift, and go to state 117
+
+
+State 60
+
+  143 yield_statement: YIELD • OPAREN SYMBOL CPAREN
+
+    OPAREN  shift, and go to state 118
+
+
+State 61
+
+  140 trace_statement: TRACE •
+  141                | TRACE • OPAREN CPAREN
+  142                | TRACE • OPAREN formatted_string CPAREN
+
+    OPAREN  shift, and go to state 119
+
+    $default  reduce using rule 140 (trace_statement)
+
+
+State 62
+
+  135 print_statement: PRINT •
+  136                | PRINT • OPAREN CPAREN
+  137                | PRINT • OPAREN formatted_string CPAREN
+
+    OPAREN  shift, and go to state 120
+
+    $default  reduce using rule 135 (print_statement)
+
+
+State 63
+
+  138 break_statement: BREAK •
+
+    $default  reduce using rule 138 (break_statement)
+
+
+State 64
+
+  139 cont_statement: CONTINUE •
+
+    $default  reduce using rule 139 (cont_statement)
+
+
+State 65
+
+  134 inline_block: INLINE • formatted_string
+
+    STRG_CONST  shift, and go to state 121
+
+    formatted_string  go to state 122
+
+
+State 66
+
+  102 func_block: OBLOCK CBLOCK •
+
+    $default  reduce using rule 102 (func_block)
+
+
+State 67
+
+   20 compound_name: SYMBOL •
+   24 compound_reference_element: SYMBOL •
+
+    DOT       reduce using rule 20 (compound_name)
+    DOT       [reduce using rule 24 (compound_reference_element)]
+    OPAREN    reduce using rule 20 (compound_name)
+    OBRACE    reduce using rule 20 (compound_name)
+    SYMBOL    reduce using rule 20 (compound_name)
+    SYMBOL    [reduce using rule 24 (compound_reference_element)]
+    $default  reduce using rule 24 (compound_reference_element)
+
+
+State 68
+
+   58 var_declaration: type_name • SYMBOL
+
+    SYMBOL  shift, and go to state 123
+
+
+State 69
+
+   11 type_name: compound_name •
+   21 compound_name: compound_name • DOT SYMBOL
+   30 func_reference: compound_name • OPAREN CPAREN
+   31               | compound_name • OPAREN expr_list CPAREN
+   32 array_reference: compound_name • array_reference_list
+
+    DOT     shift, and go to state 44
+    OPAREN  shift, and go to state 124
+    OBRACE  shift, and go to state 125
+
+    $default  reduce using rule 11 (type_name)
+
+    array_reference_list  go to state 126
+
+
+State 70
+
+   23 compound_reference: compound_reference • DOT compound_reference_element
+  117 func_content_elem: compound_reference •
+  118                  | compound_reference • assignment
+
+    DOT         shift, and go to state 127
+    ASSIGN      shift, and go to state 128
+    ADD_ASSIGN  shift, and go to state 129
+    SUB_ASSIGN  shift, and go to state 130
+    MUL_ASSIGN  shift, and go to state 131
+    DIV_ASSIGN  shift, and go to state 132
+    MOD_ASSIGN  shift, and go to state 133
+
+    $default  reduce using rule 117 (func_content_elem)
+
+    assignment_oper  go to state 134
+    assignment       go to state 135
+
+
+State 71
+
+   22 compound_reference: compound_reference_element •
+
+    $default  reduce using rule 22 (compound_reference)
+
+
+State 72
+
+   25 compound_reference_element: func_reference •
+
+    $default  reduce using rule 25 (compound_reference_element)
+
+
+State 73
+
+   26 compound_reference_element: array_reference •
+
+    $default  reduce using rule 26 (compound_reference_element)
+
+
+State 74
+
+  111 data_definition: var_declaration •
+  112                | var_declaration • assignment
+
+    ASSIGN      shift, and go to state 128
+    ADD_ASSIGN  shift, and go to state 129
+    SUB_ASSIGN  shift, and go to state 130
+    MUL_ASSIGN  shift, and go to state 131
+    DIV_ASSIGN  shift, and go to state 132
+    MOD_ASSIGN  shift, and go to state 133
+
+    $default  reduce using rule 111 (data_definition)
+
+    assignment_oper  go to state 134
+    assignment       go to state 136
+
+
+State 75
+
+  115 func_content_elem: func_block •
+
+    $default  reduce using rule 115 (func_content_elem)
+
+
+State 76
+
+  116 func_content_elem: data_definition •
+
+    $default  reduce using rule 116 (func_content_elem)
+
+
+State 77
+
+  103 func_block: OBLOCK func_content • CBLOCK
+  114 func_content: func_content • func_content_elem
+
+    IF        shift, and go to state 51
+    WHILE     shift, and go to state 52
+    DO        shift, and go to state 53
+    FOR       shift, and go to state 54
+    TRY       shift, and go to state 55
+    RAISE     shift, and go to state 56
+    RETURN    shift, and go to state 57
+    EXIT      shift, and go to state 58
+    SWITCH    shift, and go to state 59
+    YIELD     shift, and go to state 60
+    TRACE     shift, and go to state 61
+    PRINT     shift, and go to state 62
+    BREAK     shift, and go to state 63
+    CONTINUE  shift, and go to state 64
+    INLINE    shift, and go to state 65
+    OBLOCK    shift, and go to state 37
+    CBLOCK    shift, and go to state 137
+    SYMBOL    shift, and go to state 67
+    INTEGER   shift, and go to state 9
+    UNSIGNED  shift, and go to state 10
+    FLOAT     shift, and go to state 11
+    STRING    shift, and go to state 12
+    DICT      shift, and go to state 13
+    LIST      shift, and go to state 14
+    BOOLEAN   shift, and go to state 15
+    NOTHING   shift, and go to state 16
+
+    type_name                   go to state 68
+    compound_name               go to state 69
+    compound_reference          go to state 70
+    compound_reference_element  go to state 71
+    func_reference              go to state 72
+    array_reference             go to state 73
+    var_declaration             go to state 74
+    func_block                  go to state 75
+    data_definition             go to state 76
+    func_content_elem           go to state 138
+    inline_block                go to state 79
+    print_statement             go to state 80
+    break_statement             go to state 81
+    cont_statement              go to state 82
+    trace_statement             go to state 83
+    yield_statement             go to state 84
+    exit_statement              go to state 85
+    return_statement            go to state 86
+    raise_statement             go to state 87
+    if_else_clause              go to state 88
+    if_clause                   go to state 89
+    while_clause                go to state 90
+    do_clause                   go to state 91
+    for_clause                  go to state 92
+    switch_case_clause          go to state 93
+    switch_clause               go to state 94
+    try_except_clause           go to state 95
+    try_clause                  go to state 96
+
+
+State 78
+
+  113 func_content: func_content_elem •
+
+    $default  reduce using rule 113 (func_content)
+
+
+State 79
+
+  133 func_content_elem: inline_block •
+
+    $default  reduce using rule 133 (func_content_elem)
+
+
+State 80
+
+  130 func_content_elem: print_statement •
+
+    $default  reduce using rule 130 (func_content_elem)
+
+
+State 81
+
+  131 func_content_elem: break_statement •
+
+    $default  reduce using rule 131 (func_content_elem)
+
+
+State 82
+
+  132 func_content_elem: cont_statement •
+
+    $default  reduce using rule 132 (func_content_elem)
+
+
+State 83
+
+  129 func_content_elem: trace_statement •
+
+    $default  reduce using rule 129 (func_content_elem)
+
+
+State 84
+
+  128 func_content_elem: yield_statement •
+
+    $default  reduce using rule 128 (func_content_elem)
+
+
+State 85
+
+  127 func_content_elem: exit_statement •
+
+    $default  reduce using rule 127 (func_content_elem)
+
+
+State 86
+
+  125 func_content_elem: return_statement •
+
+    $default  reduce using rule 125 (func_content_elem)
+
+
+State 87
+
+  126 func_content_elem: raise_statement •
+
+    $default  reduce using rule 126 (func_content_elem)
+
+
+State 88
+
+  119 func_content_elem: if_else_clause •
+
+    $default  reduce using rule 119 (func_content_elem)
+
+
+State 89
+
+  149 if_else_clause: if_clause •
+  150               | if_clause • else_clause_list
+  151               | if_clause • else_clause_list else_clause_final
+
+    ELSE  shift, and go to state 139
+
+    $default  reduce using rule 149 (if_else_clause)
+
+    else_clause       go to state 140
+    else_clause_list  go to state 141
+
+
+State 90
+
+  120 func_content_elem: while_clause •
+
+    $default  reduce using rule 120 (func_content_elem)
+
+
+State 91
+
+  121 func_content_elem: do_clause •
+
+    $default  reduce using rule 121 (func_content_elem)
+
+
+State 92
+
+  122 func_content_elem: for_clause •
+
+    $default  reduce using rule 122 (func_content_elem)
+
+
+State 93
+
+  123 func_content_elem: switch_case_clause •
+
+    $default  reduce using rule 123 (func_content_elem)
+
+
+State 94
+
+  162 switch_case_clause: switch_clause • case_clause_list case_clause_final
+
+    CASE  shift, and go to state 142
+
+    case_clause       go to state 143
+    case_clause_list  go to state 144
+
+
+State 95
+
+  124 func_content_elem: try_except_clause •
+
+    $default  reduce using rule 124 (func_content_elem)
+
+
+State 96
+
+  169 try_except_clause: try_clause • except_clause_list except_clause_final
+
+    EXCEPT  shift, and go to state 145
+
+    except_clause       go to state 146
+    except_clause_list  go to state 147
+
+
+State 97
+
+   99 func_definition: type_name member SYMBOL • func_decl_parms func_block
+
+    OPAREN  shift, and go to state 99
+
+    func_decl_parms  go to state 148
+
+
+State 98
+
+   21 compound_name: compound_name DOT SYMBOL •
+
+    $default  reduce using rule 21 (compound_name)
+
+
+State 99
+
+   62 func_decl_parms: OPAREN • CPAREN
+   63                | OPAREN • func_decl_parms_list CPAREN
+
+    CPAREN    shift, and go to state 149
+    SYMBOL    shift, and go to state 35
+    INTEGER   shift, and go to state 9
+    UNSIGNED  shift, and go to state 10
+    FLOAT     shift, and go to state 11
+    STRING    shift, and go to state 12
+    DICT      shift, and go to state 13
+    LIST      shift, and go to state 14
+    BOOLEAN   shift, and go to state 15
+    NOTHING   shift, and go to state 16
+
+    type_name             go to state 150
+    compound_name         go to state 23
+    func_decl_parms_list  go to state 151
+    func_decl_parms_elem  go to state 152
+
+
+State 100
+
+  100 ctor_definition: member CREATE func_decl_parms • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 153
+
+
+State 101
+
+  101 dtor_definition: member DESTROY func_block •
+
+    $default  reduce using rule 101 (dtor_definition)
+
+
+State 102
+
+   37 namespace_definition: NAMESPACE SYMBOL OBLOCK namespace_block • CBLOCK
+   39 namespace_block: namespace_block • namespace_element
+
+    NAMESPACE  shift, and go to state 1
+    CLASS      shift, and go to state 2
+    CBLOCK     shift, and go to state 154
+    SYMBOL     shift, and go to state 5
+    PUBLIC     shift, and go to state 6
+    PRIVATE    shift, and go to state 7
+    PROTECTED  shift, and go to state 8
+    INTEGER    shift, and go to state 9
+    UNSIGNED   shift, and go to state 10
+    FLOAT      shift, and go to state 11
+    STRING     shift, and go to state 12
+    DICT       shift, and go to state 13
+    LIST       shift, and go to state 14
+    BOOLEAN    shift, and go to state 15
+    NOTHING    shift, and go to state 16
+
+    scope                 go to state 21
+    type_name             go to state 22
+    compound_name         go to state 23
+    namespace_definition  go to state 25
+    namespace_element     go to state 155
+    class_definition      go to state 27
+    var_declaration       go to state 28
+    member                go to state 29
+    func_definition       go to state 30
+    ctor_definition       go to state 31
+    dtor_definition       go to state 32
+
+
+State 103
+
+   38 namespace_block: namespace_element •
+
+    $default  reduce using rule 38 (namespace_block)
+
+
+State 104
+
+   49 class_parameters: OPAREN CPAREN •
+
+    $default  reduce using rule 49 (class_parameters)
+
+
+State 105
+
+   21 compound_name: compound_name • DOT SYMBOL
+   50 class_parameters: OPAREN compound_name • CPAREN
+
+    DOT     shift, and go to state 44
+    CPAREN  shift, and go to state 156
+
+
+State 106
+
+   51 class_block: OBLOCK • CBLOCK
+   52            | OBLOCK • class_body CBLOCK
+
+    CREATE     shift, and go to state 157
+    DESTROY    shift, and go to state 158
+    CBLOCK     shift, and go to state 159
+    SYMBOL     shift, and go to state 35
+    PUBLIC     shift, and go to state 6
+    PRIVATE    shift, and go to state 7
+    PROTECTED  shift, and go to state 8
+    INTEGER    shift, and go to state 9
+    UNSIGNED   shift, and go to state 10
+    FLOAT      shift, and go to state 11
+    STRING     shift, and go to state 12
+    DICT       shift, and go to state 13
+    LIST       shift, and go to state 14
+    BOOLEAN    shift, and go to state 15
+    NOTHING    shift, and go to state 16
+
+    scope               go to state 160
+    type_name           go to state 161
+    compound_name       go to state 23
+    class_body          go to state 162
+    class_body_element  go to state 163
+    var_declaration     go to state 164
+    func_declaration    go to state 165
+
+
+State 107
+
+   47 class_definition: CLASS SYMBOL class_parameters class_block •
+
+    $default  reduce using rule 47 (class_definition)
+
+
+State 108
+
+   36 import_statement: IMPORT compound_name AS SYMBOL •
+
+    $default  reduce using rule 36 (import_statement)
+
+
+State 109
+
+  152 if_clause: IF OPAREN • expression CPAREN func_block
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 181
+    cast_expr                   go to state 182
+
+
+State 110
+
+  158 while_clause: WHILE OPAREN • expression CPAREN func_block
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 183
+    cast_expr                   go to state 182
+
+
+State 111
+
+  159 do_clause: DO func_block • WHILE OPAREN expression CPAREN
+
+    WHILE  shift, and go to state 184
+
+
+State 112
+
+  160 for_clause: FOR OPAREN • SYMBOL IN compound_reference CPAREN func_block
+  161           | FOR OPAREN • SYMBOL IN expression TO expression CPAREN func_block
+
+    SYMBOL  shift, and go to state 185
+
+
+State 113
+
+  170 try_clause: TRY func_block •
+
+    $default  reduce using rule 170 (try_clause)
+
+
+State 114
+
+  148 raise_statement: RAISE OPAREN • compound_name CPAREN
+
+    SYMBOL  shift, and go to state 35
+
+    compound_name  go to state 186
+
+
+State 115
+
+  146 return_statement: RETURN OPAREN • CPAREN
+  147                 | RETURN OPAREN • expression CPAREN
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    CPAREN          shift, and go to state 187
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 188
+    cast_expr                   go to state 182
+
+
+State 116
+
+  144 exit_statement: EXIT OPAREN • expression CPAREN
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 189
+    cast_expr                   go to state 182
+
+
+State 117
+
+  163 switch_clause: SWITCH OPAREN • expression CPAREN OBLOCK
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 190
+    cast_expr                   go to state 182
+
+
+State 118
+
+  143 yield_statement: YIELD OPAREN • SYMBOL CPAREN
+
+    SYMBOL  shift, and go to state 191
+
+
+State 119
+
+  141 trace_statement: TRACE OPAREN • CPAREN
+  142                | TRACE OPAREN • formatted_string CPAREN
+
+    CPAREN      shift, and go to state 192
+    STRG_CONST  shift, and go to state 121
+
+    formatted_string  go to state 193
+
+
+State 120
+
+  136 print_statement: PRINT OPAREN • CPAREN
+  137                | PRINT OPAREN • formatted_string CPAREN
+
+    CPAREN      shift, and go to state 194
+    STRG_CONST  shift, and go to state 121
+
+    formatted_string  go to state 195
+
+
+State 121
+
+   27 formatted_string: STRG_CONST •
+   28                 | STRG_CONST • OPAREN CPAREN
+   29                 | STRG_CONST • OPAREN expr_list CPAREN
+
+    OPAREN  shift, and go to state 196
+
+    $default  reduce using rule 27 (formatted_string)
+
+
+State 122
+
+  134 inline_block: INLINE formatted_string •
+
+    $default  reduce using rule 134 (inline_block)
+
+
+State 123
+
+   58 var_declaration: type_name SYMBOL •
+
+    $default  reduce using rule 58 (var_declaration)
+
+
+State 124
+
+   30 func_reference: compound_name OPAREN • CPAREN
+   31               | compound_name OPAREN • expr_list CPAREN
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    CPAREN          shift, and go to state 197
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 198
+    cast_expr                   go to state 182
+    expr_list                   go to state 199
+
+
+State 125
+
+   33 array_reference_list: OBRACE • expression CBRACE
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 200
+    cast_expr                   go to state 182
+
+
+State 126
+
+   32 array_reference: compound_name array_reference_list •
+   34 array_reference_list: array_reference_list • OBRACE expression CBRACE
+
+    OBRACE  shift, and go to state 201
+
+    $default  reduce using rule 32 (array_reference)
+
+
+State 127
+
+   23 compound_reference: compound_reference DOT • compound_reference_element
+
+    SYMBOL  shift, and go to state 67
+
+    compound_name               go to state 175
+    compound_reference_element  go to state 202
+    func_reference              go to state 72
+    array_reference             go to state 73
+
+
+State 128
+
+  104 assignment_oper: ASSIGN •
+
+    $default  reduce using rule 104 (assignment_oper)
+
+
+State 129
+
+  105 assignment_oper: ADD_ASSIGN •
+
+    $default  reduce using rule 105 (assignment_oper)
+
+
+State 130
+
+  106 assignment_oper: SUB_ASSIGN •
+
+    $default  reduce using rule 106 (assignment_oper)
+
+
+State 131
+
+  107 assignment_oper: MUL_ASSIGN •
+
+    $default  reduce using rule 107 (assignment_oper)
+
+
+State 132
+
+  108 assignment_oper: DIV_ASSIGN •
+
+    $default  reduce using rule 108 (assignment_oper)
+
+
+State 133
+
+  109 assignment_oper: MOD_ASSIGN •
+
+    $default  reduce using rule 109 (assignment_oper)
+
+
+State 134
+
+  110 assignment: assignment_oper • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 203
+    cast_expr                   go to state 182
+
+
+State 135
+
+  118 func_content_elem: compound_reference assignment •
+
+    $default  reduce using rule 118 (func_content_elem)
+
+
+State 136
+
+  112 data_definition: var_declaration assignment •
+
+    $default  reduce using rule 112 (data_definition)
+
+
+State 137
+
+  103 func_block: OBLOCK func_content CBLOCK •
+
+    $default  reduce using rule 103 (func_block)
+
+
+State 138
+
+  114 func_content: func_content func_content_elem •
+
+    $default  reduce using rule 114 (func_content)
+
+
+State 139
+
+  153 else_clause: ELSE • OPAREN expression CPAREN func_block
+
+    OPAREN  shift, and go to state 204
+
+
+State 140
+
+  154 else_clause_list: else_clause •
+
+    $default  reduce using rule 154 (else_clause_list)
+
+
+State 141
+
+  150 if_else_clause: if_clause else_clause_list •
+  151               | if_clause else_clause_list • else_clause_final
+  155 else_clause_list: else_clause_list • else_clause
+
+    ELSE  shift, and go to state 205
+
+    $default  reduce using rule 150 (if_else_clause)
+
+    else_clause        go to state 206
+    else_clause_final  go to state 207
+
+
+State 142
+
+  164 case_clause: CASE • OPAREN const_expression CPAREN func_block
+
+    OPAREN  shift, and go to state 208
+
+
+State 143
+
+  165 case_clause_list: case_clause •
+
+    $default  reduce using rule 165 (case_clause_list)
+
+
+State 144
+
+  162 switch_case_clause: switch_clause case_clause_list • case_clause_final
+  166 case_clause_list: case_clause_list • case_clause
+
+    CASE     shift, and go to state 142
+    DEFAULT  shift, and go to state 209
+    CBLOCK   shift, and go to state 210
+
+    case_clause        go to state 211
+    case_clause_final  go to state 212
+
+
+State 145
+
+  171 except_clause: EXCEPT • OPAREN compound_name CPAREN func_block
+
+    OPAREN  shift, and go to state 213
+
+
+State 146
+
+  172 except_clause_list: except_clause •
+
+    $default  reduce using rule 172 (except_clause_list)
+
+
+State 147
+
+  169 try_except_clause: try_clause except_clause_list • except_clause_final
+  173 except_clause_list: except_clause_list • except_clause
+
+    EXCEPT  shift, and go to state 214
+
+    except_clause        go to state 215
+    except_clause_final  go to state 216
+
+
+State 148
+
+   99 func_definition: type_name member SYMBOL func_decl_parms • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 217
+
+
+State 149
+
+   62 func_decl_parms: OPAREN CPAREN •
+
+    $default  reduce using rule 62 (func_decl_parms)
+
+
+State 150
+
+   66 func_decl_parms_elem: type_name • SYMBOL
+
+    SYMBOL  shift, and go to state 218
+
+
+State 151
+
+   63 func_decl_parms: OPAREN func_decl_parms_list • CPAREN
+   65 func_decl_parms_list: func_decl_parms_list • COMMA func_decl_parms_elem
+
+    COMMA   shift, and go to state 219
+    CPAREN  shift, and go to state 220
+
+
+State 152
+
+   64 func_decl_parms_list: func_decl_parms_elem •
+
+    $default  reduce using rule 64 (func_decl_parms_list)
+
+
+State 153
+
+  100 ctor_definition: member CREATE func_decl_parms func_block •
+
+    $default  reduce using rule 100 (ctor_definition)
+
+
+State 154
+
+   37 namespace_definition: NAMESPACE SYMBOL OBLOCK namespace_block CBLOCK •
+
+    $default  reduce using rule 37 (namespace_definition)
+
+
+State 155
+
+   39 namespace_block: namespace_block namespace_element •
+
+    $default  reduce using rule 39 (namespace_block)
+
+
+State 156
+
+   50 class_parameters: OPAREN compound_name CPAREN •
+
+    $default  reduce using rule 50 (class_parameters)
+
+
+State 157
+
+   60 func_declaration: CREATE • func_decl_parms
+
+    OPAREN  shift, and go to state 99
+
+    func_decl_parms  go to state 221
+
+
+State 158
+
+   61 func_declaration: DESTROY •
+
+    $default  reduce using rule 61 (func_declaration)
+
+
+State 159
+
+   51 class_block: OBLOCK CBLOCK •
+
+    $default  reduce using rule 51 (class_block)
+
+
+State 160
+
+   57 class_body_element: scope •
+
+    $default  reduce using rule 57 (class_body_element)
+
+
+State 161
+
+   58 var_declaration: type_name • SYMBOL
+   59 func_declaration: type_name • SYMBOL func_decl_parms
+
+    SYMBOL  shift, and go to state 222
+
+
+State 162
+
+   52 class_block: OBLOCK class_body • CBLOCK
+   54 class_body: class_body • class_body_element
+
+    CREATE     shift, and go to state 157
+    DESTROY    shift, and go to state 158
+    CBLOCK     shift, and go to state 223
+    SYMBOL     shift, and go to state 35
+    PUBLIC     shift, and go to state 6
+    PRIVATE    shift, and go to state 7
+    PROTECTED  shift, and go to state 8
+    INTEGER    shift, and go to state 9
+    UNSIGNED   shift, and go to state 10
+    FLOAT      shift, and go to state 11
+    STRING     shift, and go to state 12
+    DICT       shift, and go to state 13
+    LIST       shift, and go to state 14
+    BOOLEAN    shift, and go to state 15
+    NOTHING    shift, and go to state 16
+
+    scope               go to state 160
+    type_name           go to state 161
+    compound_name       go to state 23
+    class_body_element  go to state 224
+    var_declaration     go to state 164
+    func_declaration    go to state 165
+
+
+State 163
+
+   53 class_body: class_body_element •
+
+    $default  reduce using rule 53 (class_body)
+
+
+State 164
+
+   55 class_body_element: var_declaration •
+
+    $default  reduce using rule 55 (class_body_element)
+
+
+State 165
+
+   56 class_body_element: func_declaration •
+
+    $default  reduce using rule 56 (class_body_element)
+
+
+State 166
+
+   67 bool_literal: TRUE •
+
+    $default  reduce using rule 67 (bool_literal)
+
+
+State 167
+
+   68 bool_literal: FALSE •
+
+    $default  reduce using rule 68 (bool_literal)
+
+
+State 168
+
+   71 primary: OPAREN • expression CPAREN
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 225
+    cast_expr                   go to state 182
+
+
+State 169
+
+   74 const_expression: FLOAT_CONST •
+
+    $default  reduce using rule 74 (const_expression)
+
+
+State 170
+
+   75 const_expression: INT_CONST •
+
+    $default  reduce using rule 75 (const_expression)
+
+
+State 171
+
+   76 const_expression: UNSIGNED_CONST •
+
+    $default  reduce using rule 76 (const_expression)
+
+
+State 172
+
+   93 expression: SUB • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 226
+    cast_expr                   go to state 182
+
+
+State 173
+
+   92 expression: NOT • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 227
+    cast_expr                   go to state 182
+
+
+State 174
+
+   95 cast_expr: OPOINT • type_name CPOINT expression
+
+    SYMBOL    shift, and go to state 35
+    INTEGER   shift, and go to state 9
+    UNSIGNED  shift, and go to state 10
+    FLOAT     shift, and go to state 11
+    STRING    shift, and go to state 12
+    DICT      shift, and go to state 13
+    LIST      shift, and go to state 14
+    BOOLEAN   shift, and go to state 15
+    NOTHING   shift, and go to state 16
+
+    type_name      go to state 228
+    compound_name  go to state 23
+
+
+State 175
+
+   21 compound_name: compound_name • DOT SYMBOL
+   30 func_reference: compound_name • OPAREN CPAREN
+   31               | compound_name • OPAREN expr_list CPAREN
+   32 array_reference: compound_name • array_reference_list
+
+    DOT     shift, and go to state 44
+    OPAREN  shift, and go to state 124
+    OBRACE  shift, and go to state 125
+
+    array_reference_list  go to state 126
+
+
+State 176
+
+   23 compound_reference: compound_reference • DOT compound_reference_element
+   69 primary: compound_reference •
+
+    DOT  shift, and go to state 127
+
+    $default  reduce using rule 69 (primary)
+
+
+State 177
+
+   72 const_expression: formatted_string •
+
+    $default  reduce using rule 72 (const_expression)
+
+
+State 178
+
+   73 const_expression: bool_literal •
+
+    $default  reduce using rule 73 (const_expression)
+
+
+State 179
+
+   77 expression: primary •
+
+    $default  reduce using rule 77 (expression)
+
+
+State 180
+
+   70 primary: const_expression •
+
+    $default  reduce using rule 70 (primary)
+
+
+State 181
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  152 if_clause: IF OPAREN expression • CPAREN func_block
+
+    CPAREN  shift, and go to state 229
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 182
+
+   94 expression: cast_expr •
+
+    $default  reduce using rule 94 (expression)
+
+
+State 183
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  158 while_clause: WHILE OPAREN expression • CPAREN func_block
+
+    CPAREN  shift, and go to state 244
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 184
+
+  159 do_clause: DO func_block WHILE • OPAREN expression CPAREN
+
+    OPAREN  shift, and go to state 245
+
+
+State 185
+
+  160 for_clause: FOR OPAREN SYMBOL • IN compound_reference CPAREN func_block
+  161           | FOR OPAREN SYMBOL • IN expression TO expression CPAREN func_block
+
+    IN  shift, and go to state 246
+
+
+State 186
+
+   21 compound_name: compound_name • DOT SYMBOL
+  148 raise_statement: RAISE OPAREN compound_name • CPAREN
+
+    DOT     shift, and go to state 44
+    CPAREN  shift, and go to state 247
+
+
+State 187
+
+  146 return_statement: RETURN OPAREN CPAREN •
+
+    $default  reduce using rule 146 (return_statement)
+
+
+State 188
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  147 return_statement: RETURN OPAREN expression • CPAREN
+
+    CPAREN  shift, and go to state 248
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 189
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  144 exit_statement: EXIT OPAREN expression • CPAREN
+
+    CPAREN  shift, and go to state 249
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 190
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  163 switch_clause: SWITCH OPAREN expression • CPAREN OBLOCK
+
+    CPAREN  shift, and go to state 250
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 191
+
+  143 yield_statement: YIELD OPAREN SYMBOL • CPAREN
+
+    CPAREN  shift, and go to state 251
+
+
+State 192
+
+  141 trace_statement: TRACE OPAREN CPAREN •
+
+    $default  reduce using rule 141 (trace_statement)
+
+
+State 193
+
+  142 trace_statement: TRACE OPAREN formatted_string • CPAREN
+
+    CPAREN  shift, and go to state 252
+
+
+State 194
+
+  136 print_statement: PRINT OPAREN CPAREN •
+
+    $default  reduce using rule 136 (print_statement)
+
+
+State 195
+
+  137 print_statement: PRINT OPAREN formatted_string • CPAREN
+
+    CPAREN  shift, and go to state 253
+
+
+State 196
+
+   28 formatted_string: STRG_CONST OPAREN • CPAREN
+   29                 | STRG_CONST OPAREN • expr_list CPAREN
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    CPAREN          shift, and go to state 254
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 198
+    cast_expr                   go to state 182
+    expr_list                   go to state 255
+
+
+State 197
+
+   30 func_reference: compound_name OPAREN CPAREN •
+
+    $default  reduce using rule 30 (func_reference)
+
+
+State 198
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+   96 expr_list: expression •
+
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+    $default  reduce using rule 96 (expr_list)
+
+
+State 199
+
+   31 func_reference: compound_name OPAREN expr_list • CPAREN
+   97 expr_list: expr_list • COMMA expression
+
+    COMMA   shift, and go to state 256
+    CPAREN  shift, and go to state 257
+
+
+State 200
+
+   33 array_reference_list: OBRACE expression • CBRACE
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    CBRACE  shift, and go to state 258
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 201
+
+   34 array_reference_list: array_reference_list OBRACE • expression CBRACE
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 259
+    cast_expr                   go to state 182
+
+
+State 202
+
+   23 compound_reference: compound_reference DOT compound_reference_element •
+
+    $default  reduce using rule 23 (compound_reference)
+
+
+State 203
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  110 assignment: assignment_oper expression •
+
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+    $default  reduce using rule 110 (assignment)
+
+
+State 204
+
+  153 else_clause: ELSE OPAREN • expression CPAREN func_block
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 260
+    cast_expr                   go to state 182
+
+
+State 205
+
+  153 else_clause: ELSE • OPAREN expression CPAREN func_block
+  156 else_clause_final: ELSE • OPAREN CPAREN func_block
+  157                  | ELSE • func_block
+
+    OPAREN  shift, and go to state 261
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 262
+
+
+State 206
+
+  155 else_clause_list: else_clause_list else_clause •
+
+    $default  reduce using rule 155 (else_clause_list)
+
+
+State 207
+
+  151 if_else_clause: if_clause else_clause_list else_clause_final •
+
+    $default  reduce using rule 151 (if_else_clause)
+
+
+State 208
+
+  164 case_clause: CASE OPAREN • const_expression CPAREN func_block
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    STRG_CONST      shift, and go to state 121
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+
+    formatted_string  go to state 177
+    bool_literal      go to state 178
+    const_expression  go to state 263
+
+
+State 209
+
+  168 case_clause_final: DEFAULT • func_block CBLOCK
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 264
+
+
+State 210
+
+  167 case_clause_final: CBLOCK •
+
+    $default  reduce using rule 167 (case_clause_final)
+
+
+State 211
+
+  166 case_clause_list: case_clause_list case_clause •
+
+    $default  reduce using rule 166 (case_clause_list)
+
+
+State 212
+
+  162 switch_case_clause: switch_clause case_clause_list case_clause_final •
+
+    $default  reduce using rule 162 (switch_case_clause)
+
+
+State 213
+
+  171 except_clause: EXCEPT OPAREN • compound_name CPAREN func_block
+
+    SYMBOL  shift, and go to state 35
+
+    compound_name  go to state 265
+
+
+State 214
+
+  171 except_clause: EXCEPT • OPAREN compound_name CPAREN func_block
+  174 except_clause_final: EXCEPT • OPAREN CPAREN func_block
+  175                    | EXCEPT • func_block
+
+    OPAREN  shift, and go to state 266
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 267
+
+
+State 215
+
+  173 except_clause_list: except_clause_list except_clause •
+
+    $default  reduce using rule 173 (except_clause_list)
+
+
+State 216
+
+  169 try_except_clause: try_clause except_clause_list except_clause_final •
+
+    $default  reduce using rule 169 (try_except_clause)
+
+
+State 217
+
+   99 func_definition: type_name member SYMBOL func_decl_parms func_block •
+
+    $default  reduce using rule 99 (func_definition)
+
+
+State 218
+
+   66 func_decl_parms_elem: type_name SYMBOL •
+
+    $default  reduce using rule 66 (func_decl_parms_elem)
+
+
+State 219
+
+   65 func_decl_parms_list: func_decl_parms_list COMMA • func_decl_parms_elem
+
+    SYMBOL    shift, and go to state 35
+    INTEGER   shift, and go to state 9
+    UNSIGNED  shift, and go to state 10
+    FLOAT     shift, and go to state 11
+    STRING    shift, and go to state 12
+    DICT      shift, and go to state 13
+    LIST      shift, and go to state 14
+    BOOLEAN   shift, and go to state 15
+    NOTHING   shift, and go to state 16
+
+    type_name             go to state 150
+    compound_name         go to state 23
+    func_decl_parms_elem  go to state 268
+
+
+State 220
+
+   63 func_decl_parms: OPAREN func_decl_parms_list CPAREN •
+
+    $default  reduce using rule 63 (func_decl_parms)
+
+
+State 221
+
+   60 func_declaration: CREATE func_decl_parms •
+
+    $default  reduce using rule 60 (func_declaration)
+
+
+State 222
+
+   58 var_declaration: type_name SYMBOL •
+   59 func_declaration: type_name SYMBOL • func_decl_parms
+
+    OPAREN  shift, and go to state 99
+
+    $default  reduce using rule 58 (var_declaration)
+
+    func_decl_parms  go to state 269
+
+
+State 223
+
+   52 class_block: OBLOCK class_body CBLOCK •
+
+    $default  reduce using rule 52 (class_block)
+
+
+State 224
+
+   54 class_body: class_body class_body_element •
+
+    $default  reduce using rule 54 (class_body)
+
+
+State 225
+
+   71 primary: OPAREN expression • CPAREN
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    CPAREN  shift, and go to state 270
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 226
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+   93           | SUB expression •
+
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 93 (expression)
+
+
+State 227
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+   92           | NOT expression •
+
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 92 (expression)
+
+
+State 228
+
+   95 cast_expr: OPOINT type_name • CPOINT expression
+
+    CPOINT  shift, and go to state 271
+
+
+State 229
+
+  152 if_clause: IF OPAREN expression CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 272
+
+
+State 230
+
+   86 expression: expression ADD • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 273
+    cast_expr                   go to state 182
+
+
+State 231
+
+   87 expression: expression SUB • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 274
+    cast_expr                   go to state 182
+
+
+State 232
+
+   88 expression: expression MUL • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 275
+    cast_expr                   go to state 182
+
+
+State 233
+
+   89 expression: expression DIV • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 276
+    cast_expr                   go to state 182
+
+
+State 234
+
+   90 expression: expression MOD • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 277
+    cast_expr                   go to state 182
+
+
+State 235
+
+   91 expression: expression POW • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 278
+    cast_expr                   go to state 182
+
+
+State 236
+
+   79 expression: expression OR • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 279
+    cast_expr                   go to state 182
+
+
+State 237
+
+   78 expression: expression AND • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 280
+    cast_expr                   go to state 182
+
+
+State 238
+
+   80 expression: expression EQU • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 281
+    cast_expr                   go to state 182
+
+
+State 239
+
+   81 expression: expression NEQU • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 282
+    cast_expr                   go to state 182
+
+
+State 240
+
+   82 expression: expression LORE • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 283
+    cast_expr                   go to state 182
+
+
+State 241
+
+   83 expression: expression GORE • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 284
+    cast_expr                   go to state 182
+
+
+State 242
+
+   84 expression: expression OPOINT • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 285
+    cast_expr                   go to state 182
+
+
+State 243
+
+   85 expression: expression CPOINT • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 286
+    cast_expr                   go to state 182
+
+
+State 244
+
+  158 while_clause: WHILE OPAREN expression CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 287
+
+
+State 245
+
+  159 do_clause: DO func_block WHILE OPAREN • expression CPAREN
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 288
+    cast_expr                   go to state 182
+
+
+State 246
+
+  160 for_clause: FOR OPAREN SYMBOL IN • compound_reference CPAREN func_block
+  161           | FOR OPAREN SYMBOL IN • expression TO expression CPAREN func_block
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 289
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 290
+    cast_expr                   go to state 182
+
+
+State 247
+
+  148 raise_statement: RAISE OPAREN compound_name CPAREN •
+
+    $default  reduce using rule 148 (raise_statement)
+
+
+State 248
+
+  147 return_statement: RETURN OPAREN expression CPAREN •
+
+    $default  reduce using rule 147 (return_statement)
+
+
+State 249
+
+  144 exit_statement: EXIT OPAREN expression CPAREN •
+
+    $default  reduce using rule 144 (exit_statement)
+
+
+State 250
+
+  163 switch_clause: SWITCH OPAREN expression CPAREN • OBLOCK
+
+    OBLOCK  shift, and go to state 291
+
+
+State 251
+
+  143 yield_statement: YIELD OPAREN SYMBOL CPAREN •
+
+    $default  reduce using rule 143 (yield_statement)
+
+
+State 252
+
+  142 trace_statement: TRACE OPAREN formatted_string CPAREN •
+
+    $default  reduce using rule 142 (trace_statement)
+
+
+State 253
+
+  137 print_statement: PRINT OPAREN formatted_string CPAREN •
+
+    $default  reduce using rule 137 (print_statement)
+
+
+State 254
+
+   28 formatted_string: STRG_CONST OPAREN CPAREN •
+
+    $default  reduce using rule 28 (formatted_string)
+
+
+State 255
+
+   29 formatted_string: STRG_CONST OPAREN expr_list • CPAREN
+   97 expr_list: expr_list • COMMA expression
+
+    COMMA   shift, and go to state 256
+    CPAREN  shift, and go to state 292
+
+
+State 256
+
+   97 expr_list: expr_list COMMA • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 293
+    cast_expr                   go to state 182
+
+
+State 257
+
+   31 func_reference: compound_name OPAREN expr_list CPAREN •
+
+    $default  reduce using rule 31 (func_reference)
+
+
+State 258
+
+   33 array_reference_list: OBRACE expression CBRACE •
+
+    $default  reduce using rule 33 (array_reference_list)
+
+
+State 259
+
+   34 array_reference_list: array_reference_list OBRACE expression • CBRACE
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    CBRACE  shift, and go to state 294
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 260
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  153 else_clause: ELSE OPAREN expression • CPAREN func_block
+
+    CPAREN  shift, and go to state 295
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 261
+
+  153 else_clause: ELSE OPAREN • expression CPAREN func_block
+  156 else_clause_final: ELSE OPAREN • CPAREN func_block
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    CPAREN          shift, and go to state 296
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 260
+    cast_expr                   go to state 182
+
+
+State 262
+
+  157 else_clause_final: ELSE func_block •
+
+    $default  reduce using rule 157 (else_clause_final)
+
+
+State 263
+
+  164 case_clause: CASE OPAREN const_expression • CPAREN func_block
+
+    CPAREN  shift, and go to state 297
+
+
+State 264
+
+  168 case_clause_final: DEFAULT func_block • CBLOCK
+
+    CBLOCK  shift, and go to state 298
+
+
+State 265
+
+   21 compound_name: compound_name • DOT SYMBOL
+  171 except_clause: EXCEPT OPAREN compound_name • CPAREN func_block
+
+    DOT     shift, and go to state 44
+    CPAREN  shift, and go to state 299
+
+
+State 266
+
+  171 except_clause: EXCEPT OPAREN • compound_name CPAREN func_block
+  174 except_clause_final: EXCEPT OPAREN • CPAREN func_block
+
+    CPAREN  shift, and go to state 300
+    SYMBOL  shift, and go to state 35
+
+    compound_name  go to state 265
+
+
+State 267
+
+  175 except_clause_final: EXCEPT func_block •
+
+    $default  reduce using rule 175 (except_clause_final)
+
+
+State 268
+
+   65 func_decl_parms_list: func_decl_parms_list COMMA func_decl_parms_elem •
+
+    $default  reduce using rule 65 (func_decl_parms_list)
+
+
+State 269
+
+   59 func_declaration: type_name SYMBOL func_decl_parms •
+
+    $default  reduce using rule 59 (func_declaration)
+
+
+State 270
+
+   71 primary: OPAREN expression CPAREN •
+
+    $default  reduce using rule 71 (primary)
+
+
+State 271
+
+   95 cast_expr: OPOINT type_name CPOINT • expression
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 301
+    cast_expr                   go to state 182
+
+
+State 272
+
+  152 if_clause: IF OPAREN expression CPAREN func_block •
+
+    $default  reduce using rule 152 (if_clause)
+
+
+State 273
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   86           | expression ADD expression •
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    MUL  shift, and go to state 232
+    DIV  shift, and go to state 233
+    MOD  shift, and go to state 234
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 86 (expression)
+
+
+State 274
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   87           | expression SUB expression •
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    MUL  shift, and go to state 232
+    DIV  shift, and go to state 233
+    MOD  shift, and go to state 234
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 87 (expression)
+
+
+State 275
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   88           | expression MUL expression •
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 88 (expression)
+
+
+State 276
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   89           | expression DIV expression •
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 89 (expression)
+
+
+State 277
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   90           | expression MOD expression •
+   91           | expression • POW expression
+
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 90 (expression)
+
+
+State 278
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+   91           | expression POW expression •
+
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 91 (expression)
+
+
+State 279
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   79           | expression OR expression •
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+    $default  reduce using rule 79 (expression)
+
+
+State 280
+
+   78 expression: expression • AND expression
+   78           | expression AND expression •
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+    $default  reduce using rule 78 (expression)
+
+
+State 281
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   80           | expression EQU expression •
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+    $default  reduce using rule 80 (expression)
+
+
+State 282
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   81           | expression NEQU expression •
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+    $default  reduce using rule 81 (expression)
+
+
+State 283
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   82           | expression LORE expression •
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD  shift, and go to state 230
+    SUB  shift, and go to state 231
+    MUL  shift, and go to state 232
+    DIV  shift, and go to state 233
+    MOD  shift, and go to state 234
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 82 (expression)
+
+
+State 284
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   83           | expression GORE expression •
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD  shift, and go to state 230
+    SUB  shift, and go to state 231
+    MUL  shift, and go to state 232
+    DIV  shift, and go to state 233
+    MOD  shift, and go to state 234
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 83 (expression)
+
+
+State 285
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   84           | expression OPOINT expression •
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD  shift, and go to state 230
+    SUB  shift, and go to state 231
+    MUL  shift, and go to state 232
+    DIV  shift, and go to state 233
+    MOD  shift, and go to state 234
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 84 (expression)
+
+
+State 286
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   85           | expression CPOINT expression •
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+
+    ADD  shift, and go to state 230
+    SUB  shift, and go to state 231
+    MUL  shift, and go to state 232
+    DIV  shift, and go to state 233
+    MOD  shift, and go to state 234
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 85 (expression)
+
+
+State 287
+
+  158 while_clause: WHILE OPAREN expression CPAREN func_block •
+
+    $default  reduce using rule 158 (while_clause)
+
+
+State 288
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  159 do_clause: DO func_block WHILE OPAREN expression • CPAREN
+
+    CPAREN  shift, and go to state 302
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 289
+
+   23 compound_reference: compound_reference • DOT compound_reference_element
+   69 primary: compound_reference •
+  160 for_clause: FOR OPAREN SYMBOL IN compound_reference • CPAREN func_block
+
+    DOT     shift, and go to state 127
+    CPAREN  shift, and go to state 303
+
+    $default  reduce using rule 69 (primary)
+
+
+State 290
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  161 for_clause: FOR OPAREN SYMBOL IN expression • TO expression CPAREN func_block
+
+    TO      shift, and go to state 304
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 291
+
+  163 switch_clause: SWITCH OPAREN expression CPAREN OBLOCK •
+
+    $default  reduce using rule 163 (switch_clause)
+
+
+State 292
+
+   29 formatted_string: STRG_CONST OPAREN expr_list CPAREN •
+
+    $default  reduce using rule 29 (formatted_string)
+
+
+State 293
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+   97 expr_list: expr_list COMMA expression •
+
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+    $default  reduce using rule 97 (expr_list)
+
+
+State 294
+
+   34 array_reference_list: array_reference_list OBRACE expression CBRACE •
+
+    $default  reduce using rule 34 (array_reference_list)
+
+
+State 295
+
+  153 else_clause: ELSE OPAREN expression CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 305
+
+
+State 296
+
+  156 else_clause_final: ELSE OPAREN CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 306
+
+
+State 297
+
+  164 case_clause: CASE OPAREN const_expression CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 307
+
+
+State 298
+
+  168 case_clause_final: DEFAULT func_block CBLOCK •
+
+    $default  reduce using rule 168 (case_clause_final)
+
+
+State 299
+
+  171 except_clause: EXCEPT OPAREN compound_name CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 308
+
+
+State 300
+
+  174 except_clause_final: EXCEPT OPAREN CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 309
+
+
+State 301
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+   95 cast_expr: OPOINT type_name CPOINT expression •
+
+    ADD  shift, and go to state 230
+    SUB  shift, and go to state 231
+    MUL  shift, and go to state 232
+    DIV  shift, and go to state 233
+    MOD  shift, and go to state 234
+    POW  shift, and go to state 235
+
+    $default  reduce using rule 95 (cast_expr)
+
+
+State 302
+
+  159 do_clause: DO func_block WHILE OPAREN expression CPAREN •
+
+    $default  reduce using rule 159 (do_clause)
+
+
+State 303
+
+  160 for_clause: FOR OPAREN SYMBOL IN compound_reference CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 310
+
+
+State 304
+
+  161 for_clause: FOR OPAREN SYMBOL IN expression TO • expression CPAREN func_block
+
+    TRUE            shift, and go to state 166
+    FALSE           shift, and go to state 167
+    OPAREN          shift, and go to state 168
+    STRG_CONST      shift, and go to state 121
+    SYMBOL          shift, and go to state 67
+    FLOAT_CONST     shift, and go to state 169
+    INT_CONST       shift, and go to state 170
+    UNSIGNED_CONST  shift, and go to state 171
+    SUB             shift, and go to state 172
+    NOT             shift, and go to state 173
+    OPOINT          shift, and go to state 174
+
+    compound_name               go to state 175
+    compound_reference          go to state 176
+    compound_reference_element  go to state 71
+    formatted_string            go to state 177
+    func_reference              go to state 72
+    array_reference             go to state 73
+    bool_literal                go to state 178
+    primary                     go to state 179
+    const_expression            go to state 180
+    expression                  go to state 311
+    cast_expr                   go to state 182
+
+
+State 305
+
+  153 else_clause: ELSE OPAREN expression CPAREN func_block •
+
+    $default  reduce using rule 153 (else_clause)
+
+
+State 306
+
+  156 else_clause_final: ELSE OPAREN CPAREN func_block •
+
+    $default  reduce using rule 156 (else_clause_final)
+
+
+State 307
+
+  164 case_clause: CASE OPAREN const_expression CPAREN func_block •
+
+    $default  reduce using rule 164 (case_clause)
+
+
+State 308
+
+  171 except_clause: EXCEPT OPAREN compound_name CPAREN func_block •
+
+    $default  reduce using rule 171 (except_clause)
+
+
+State 309
+
+  174 except_clause_final: EXCEPT OPAREN CPAREN func_block •
+
+    $default  reduce using rule 174 (except_clause_final)
+
+
+State 310
+
+  160 for_clause: FOR OPAREN SYMBOL IN compound_reference CPAREN func_block •
+
+    $default  reduce using rule 160 (for_clause)
+
+
+State 311
+
+   78 expression: expression • AND expression
+   79           | expression • OR expression
+   80           | expression • EQU expression
+   81           | expression • NEQU expression
+   82           | expression • LORE expression
+   83           | expression • GORE expression
+   84           | expression • OPOINT expression
+   85           | expression • CPOINT expression
+   86           | expression • ADD expression
+   87           | expression • SUB expression
+   88           | expression • MUL expression
+   89           | expression • DIV expression
+   90           | expression • MOD expression
+   91           | expression • POW expression
+  161 for_clause: FOR OPAREN SYMBOL IN expression TO expression • CPAREN func_block
+
+    CPAREN  shift, and go to state 312
+    ADD     shift, and go to state 230
+    SUB     shift, and go to state 231
+    MUL     shift, and go to state 232
+    DIV     shift, and go to state 233
+    MOD     shift, and go to state 234
+    POW     shift, and go to state 235
+    OR      shift, and go to state 236
+    AND     shift, and go to state 237
+    EQU     shift, and go to state 238
+    NEQU    shift, and go to state 239
+    LORE    shift, and go to state 240
+    GORE    shift, and go to state 241
+    OPOINT  shift, and go to state 242
+    CPOINT  shift, and go to state 243
+
+
+State 312
+
+  161 for_clause: FOR OPAREN SYMBOL IN expression TO expression CPAREN • func_block
+
+    OBLOCK  shift, and go to state 37
+
+    func_block  go to state 313
+
+
+State 313
+
+  161 for_clause: FOR OPAREN SYMBOL IN expression TO expression CPAREN func_block •
+
+    $default  reduce using rule 161 (for_clause)

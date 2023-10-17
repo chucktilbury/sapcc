@@ -1,276 +1,275 @@
 
-#include "standard.h"
-#include <stdarg.h>
-#include <string.h>
-
-#include "common.h"
+#include "errors.h"
 #include "scanner.h"
+#include "util.h"
+#include "logger.h"
+#include <stdarg.h>
 
-#define IS_SYMBOL(c) (isalpha(c) || (c) == '_')
-#define IS_SYMBOL1(c) (isalnum(c) || (c) == '_')
-#if 0
-#define TEST_EOF(f, ...)                 \
-    do {                                 \
-        if(get_char() > 0x7F)            \
-            syntax((f), ##__VA_ARGS__);  \
-        fatal("unexpected end of file"); \
-    } while(false)
-#endif
+#define SLEVEL  20
+static int errors   = 0;
+static int warnings = 0;
 
-static Token _tok;
+static Scanner* scanner_state;
 
-static void syntax(const char* fmt, ...) {
+static void scanner_error(const char* fmt, ...) {
 
     va_list args;
-    fprintf(stderr, "scanner ");
+
+    fprintf(stderr, "Scanner Error: %s: %lu: %lu: ",
+            scanner_state->fname, scanner_state->line, scanner_state->col);
 
     va_start(args, fmt);
-    error(fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
+    errors++;
+    fputc('\n', stderr);
 }
 
-static void check_eof(const char* fmt, ...) {
+static void scanner_warning(const char* fmt, ...) {
 
     va_list args;
 
-    if(get_char() > 0x7F) {
-        va_start(args, fmt);
-        syntax(fmt, args);
-        va_end(args);
-        fatal("unexpected end of file");
+    fprintf(stderr, "Scanner Warning: %s: %lu: %lu: ",
+            scanner_state->fname, scanner_state->line, scanner_state->col);
+
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    warnings++;
+    fputc('\n', stderr);
+}
+
+static int get_scanner_char() {
+
+    return get_char();
+}
+
+static int consume_scanner_char() {
+
+    return consume_char();
+}
+
+static Token* create_token() {
+
+    Token* tok = _ALLOC_T(Token);
+    tok->str   = create_string(NULL);
+
+    return tok;
+}
+
+static void reset_token(Token* tok) {
+
+    truncate_string(tok->str, 0);
+}
+
+static void destroy_token(Token* tok) {
+
+    if(tok != NULL) {
+        destroy_string(tok->str);
+        _FREE(tok);
     }
 }
 
-static void consume_space() {
+static void eat_comment() {
 
-    int ch = get_char();
-    while(isspace(ch))
-        ch = consume_char();
+    // consume the '#'
+    consume_scanner_char();
+    while(get_scanner_char() != '\n')
+        consume_scanner_char();
 }
 
-static void consume_comment() {
+static void get_word() {
 
-    int ch = consume_char();
-    while(ch != '\n')
-        ch = consume_char();
-}
+    int ch = get_scanner_char();
 
-static void get_directive() {
-
-    // save the leading '%'
-    cat_str_char(_tok.str, get_char());
-    consume_char();
-
-    // read normal characters
-    int ch = get_char();
-    while(IS_SYMBOL(ch)) {
-        cat_str_char(_tok.str, ch);
-        ch = consume_char();
-        // TEST_EOF("invalid directive: %s", raw_str(_tok.str));
-        check_eof("invalid directive: %s", raw_str(_tok.str));
+    while(!isspace(ch) && ch != EOF) {
+        add_string_char(scanner_state->token->str, ch);
+        consume_scanner_char();
+        ch = get_scanner_char();
     }
+}
 
-    if(!strcmp(raw_str(_tok.str), "%verbosity"))
-        _tok.type = VERBOSITY;
-    else if(!strcmp(raw_str(_tok.str), "%name"))
-        _tok.type = NAME;
-    else if(!strcmp(raw_str(_tok.str), "%prefix"))
-        _tok.type = PREFIX;
-    else if(!strcmp(raw_str(_tok.str), "%code"))
-        _tok.type = CODE;
-    else if(!strcmp(raw_str(_tok.str), "%scanner"))
-        _tok.type = SCANNER;
-    else if(!strcmp(raw_str(_tok.str), "%parser"))
-        _tok.type = PARSER;
-    else if(!strcmp(raw_str(_tok.str), "%include"))
-        _tok.type = INCLUDE;
-    else if(!strcmp(raw_str(_tok.str), "%syntax"))
-        _tok.type = SYNTAX;
+static void get_keyword() {
+
+    get_word();
+    if(!comp_string_const(scanner_state->token->str, "%tokens"))
+        scanner_state->token->type = TOKENS;
+    else if(!comp_string_const(scanner_state->token->str, "%grammar"))
+        scanner_state->token->type = GRAMMAR;
+    else if(!comp_string_const(scanner_state->token->str, "%source"))
+        scanner_state->token->type = SOURCE;
+    else if(!comp_string_const(scanner_state->token->str, "%header"))
+        scanner_state->token->type = HEADER;
     else {
-        _tok.type = ERROR;
-        syntax("unknown directive: %s", raw_str(_tok.str));
+        scanner_error("unknown directive: %s", raw_string(scanner_state->token->str));
+        scanner_state->token->type = ERROR;
     }
-}
-
-static void get_string() {
-
-    consume_char(); // consume the leading '\"'
-
-    int ch = get_char();
-    while(ch != '\"') {
-        cat_str_char(_tok.str, ch);
-        ch = consume_char();
-        // TEST_EOF("invalid string");
-        check_eof("invalid string");
-    }
-
-    consume_char(); // consume the trailing '\"'
-    _tok.type = STRG;
-}
-
-static void get_number() {
-
-    int ch = get_char();
-    cat_str_char(_tok.str, ch);
-
-    while(isdigit(ch = consume_char()))
-        cat_str_char(_tok.str, ch);
-
-    _tok.type = NUMBER;
-}
-
-static void get_block() {
-
-    // do not save the enclosing {}
-    consume_char(); // consume the '{'
-
-    int count = 1;
-    while(count > 0) {
-        int ch = get_char();
-        if(ch == '{') {
-            count++;
-            cat_str_char(_tok.str, ch);
-        }
-        else if(ch == '}') {
-            count--;
-            if(count > 0)
-                cat_str_char(_tok.str, ch);
-        }
-        else
-            cat_str_char(_tok.str, ch);
-
-        ch = consume_char();
-    }
-
-    _tok.type = BLOCK;
 }
 
 static void get_symbol() {
 
-    int ch = get_char();
-    if(IS_SYMBOL(ch)) {
-        cat_str_char(_tok.str, ch);
-        ch = consume_char();
-        while(IS_SYMBOL1(ch)) {
-            cat_str_char(_tok.str, ch);
-            ch = consume_char();
+    get_word();
+    scanner_state->token->type = SYMBOL;
+}
+
+/*
+    Public interface.
+ */
+void init_scanner(const char* fname) {
+
+    scanner_state = _ALLOC_T(Scanner);
+
+    open_input_file(fname);
+
+    //scanner_state->logger = init_logger(stderr, 5, "Scanner");
+    scanner_state->head  = 0;
+    scanner_state->tail  = 1;
+    scanner_state->line  = 1;
+    scanner_state->col   = 1;
+    scanner_state->fname = _DUP_STR(fname);
+
+    scanner_state->token = create_token();
+    consume_token();
+}
+
+void destroy_scanner() {
+
+    if(scanner_state != NULL) {
+        if(scanner_state->buffer != NULL)
+            _FREE(scanner_state->buffer);
+        if(scanner_state->fname != NULL)
+            _FREE(scanner_state->fname);
+        destroy_token(scanner_state->token);
+        _FREE(scanner_state);
+    }
+}
+
+Token* get_token() {
+
+    return scanner_state->token;
+}
+
+void consume_token() {
+
+    int finished = 0;
+
+    while(!finished) {
+        reset_token(scanner_state->token);
+        int ch = get_scanner_char();
+        switch(ch) {
+            case EOF:
+                scanner_state->token->type = END_OF_INPUT;
+                finished++;
+                break;
+            case '%':
+                get_keyword();
+                finished++;
+                break;
+            case '{':
+                scanner_state->token->type = OBRACE;
+                consume_scanner_char();
+                finished++;
+                break;
+            case '}':
+                scanner_state->token->type = CBRACE;
+                consume_scanner_char();
+                finished++;
+                break;
+            case ':':
+                scanner_state->token->type = COLON;
+                consume_scanner_char();
+                finished++;
+                break;
+            case ';':
+                scanner_state->token->type = SEMI;
+                consume_scanner_char();
+                finished++;
+                break;
+            case '#':
+                eat_comment();
+                break;
+            default:
+                if(isspace(ch))
+                    consume_scanner_char();
+                else if(isalnum(ch)) {
+                    get_symbol();
+                    finished++;
+                }
+                else {
+                    scanner_warning("unknown character: '%c' (0x%04X)", ch, ch);
+                    consume_scanner_char();
+                }
+
+                break;
+        }
+    }
+    LOG(SLEVEL, "scanner: %d: %d: \"%s\" (%s)", get_line_no(), get_col_no(),
+        raw_string(scanner_state->token->str),
+        tok_type_to_str(scanner_state->token->type));
+}
+
+void skip_whitespace() {
+
+    while(isspace(get_scanner_char())) {
+        consume_scanner_char();
+    }
+}
+
+// Scans a block of raw code into the current token. This is a scanner routine,
+// but it is called by the parser.
+int scan_block() {
+
+    int count = 0;
+
+    if(scanner_state->token->type == OBRACE) {
+
+        int level = 1;
+        add_string_char(scanner_state->token->str, '{');
+        count++;
+
+        while(level > 0) {
+            int ch = get_scanner_char();
+            if(ch == EOF) {
+                scanner_state->token->type = ERROR;
+                scanner_error("unexpected end of file in block");
+                return 0;
+            }
+            else if(ch == '{')
+                level++;
+            else if(ch == '}')
+                level--;
+
+            add_string_char(scanner_state->token->str, ch);
+            consume_scanner_char();
+            count++;
         }
     }
     else {
-        _tok.type = ERROR;
-        syntax("invalid symbol");
-        return;
+        syntax_error("expected a code block but got a %s",
+                     tok_type_to_str(scanner_state->token->type));
+        scanner_state->token->type = ERROR;
+        return 0;
     }
 
-    _tok.type = SYMBOL;
+    LOG(SLEVEL, "scanner: %d: %d: \"%s\" (BLOCK)", get_line_no(), get_col_no(),
+        raw_string(scanner_state->token->str));
+    scanner_state->token->type = BLOCK;
+    return count;
 }
 
-static void get_regex() {
+const char* tok_type_to_str(TokenType type) {
 
-    consume_char(); // the '('
-    int ch;
-
-    while(')' != (ch = get_char())) {
-        cat_str_char(_tok.str, ch);
-        consume_char();
-    }
-
-    consume_char(); // the ')'
-    _tok.type = REGEX;
-}
-
-TokenType get_token(Token* tok) {
-
-    if(tok != NULL) {
-        tok->type = _tok.type;
-        tok->str  = copy_str(_tok.str);
-    }
-    return _tok.type;
-}
-
-TokenType consume_token(Token* tok) {
-
-    bool finished = false;
-
-    if(_tok.str != NULL)
-        clear_str(_tok.str);
-    else
-        _tok.str = create_str(NULL);
-
-    while(!finished) {
-        consume_space();
-        switch((unsigned char)get_char()) {
-            case 0xFF:
-                _tok.type = END_OF_INPUT;
-                finished  = true;
-                break;
-            case '#':
-                consume_comment();
-                break;
-            case ':':
-                _tok.type = COLON;
-                consume_char();
-                finished = true;
-                break;
-            case '%':
-                get_directive();
-                finished = true;
-                break;
-            case '\"':
-                get_string();
-                finished = true;
-                break;
-            case '{':
-                get_block();
-                finished = true;
-                break;
-            case '(':
-                get_regex();
-                finished = true;
-                break;
-            default:
-                if(isdigit(get_char()))
-                    get_number();
-                else
-                    get_symbol();
-                finished = true;
-                break;
-        }
-    }
-
-    if(tok != NULL) {
-        tok->str  = copy_str(_tok.str);
-        tok->type = _tok.type;
-        tok->line = get_line_no();
-        tok->col  = get_col_no();
-    }
-
-    return _tok.type;
-}
-
-const char* tok_to_str(TokenType type) {
-
-    return (type == ERROR) ? "error token" :
-    (type == BLOCK)        ? "block definition" :
-    (type == COLON)        ? ":" :
-    (type == SYMBOL)       ? "symbol definition" :
-    (type == STRG)         ? "quoted string" :
-    (type == NUMBER)       ? "number" :
-    (type == VERBOSITY)    ? "verbosity directive" :
-    (type == NAME)         ? "file name directive" :
-    (type == PREFIX)       ? "data structure prefix directive" :
-    (type == CODE)         ? "code directive" :
-    (type == SCANNER)      ? "scanner directive" :
-    (type == PARSER)       ? "parser directive" :
-    (type == INCLUDE)      ? "include directive" :
-    (type == SYNTAX)       ? "syntax directive" :
-    (type == REGEX)        ? "regular expression" :
-    (type == END_OF_INPUT) ? "end of input" :
-                             "UNKNOWN";
-}
-
-void open_scanner_file(const char* fname) {
-
-    open_input_file(fname);
-    consume_token(NULL);
+    return (type == TOKENS) ? "TOKENS" :
+    (type == GRAMMAR)       ? "GRAMMAR" :
+    (type == SOURCE)        ? "SOURCE" :
+    (type == HEADER)        ? "HEADER" :
+    (type == BLOCK)         ? "BLOCK" :
+    (type == SYMBOL)        ? "SYMBOL" :
+    (type == COLON)         ? ":" :
+    (type == SEMI)          ? ";" :
+    (type == OBRACE)        ? "{" :
+    (type == CBRACE)        ? "}" :
+    (type == END_OF_INPUT)  ? "END OF INPUT" :
+    (type == ERROR)         ? "ERROR" :
+                              "UNKNOWN";
 }

@@ -1,37 +1,47 @@
 #ifndef _SCANNER_H
 #define _SCANNER_H
 
-#include "strs.h"
+#include <stddef.h>
+#include "util.h"
+#include "logger.h"
 
 typedef enum {
-    ERROR = 200,
-    BLOCK,        // '{' .*[^\n] '}'
-    COLON,        // ':'
-    SYMBOL,       // [a-zA-Z_][a-zA-Z0-9_]+
-    STRG,         // '\"' .*[^\n] '\"'
-    NUMBER,       // [0-9]+
-    VERBOSITY,    // "%verbosity"
-    PREFIX,       // "%prefix"
-    NAME,         // "%name"
-    CODE,         // "%code"
-    SCANNER,      // "%scanner"
-    PARSER,       // "%parser"
-    INCLUDE,      // "%include"
-    SYNTAX,       // "%syntax"
-    REGEX,        // regular expression
-    END_OF_INPUT, // file's end
+    END_OF_INPUT, // end of input
+    ERROR,        // scanner error
+    TOKENS,       // The %tokens keyword
+    GRAMMAR,      // the %grammar keyword
+    SOURCE,       // the %source keyword
+    HEADER,       // the %header keyword
+    BLOCK,        // a generic '{'.*'}' block
+    SYMBOL,       // a generic name: [a-zA-Z][a-zA-Z0-9]*
+    COLON,        // a ':' character
+    SEMI,         // a ';' character
+    OBRACE,       // a '{'
+    CBRACE,       // a '}'
 } TokenType;
 
 typedef struct {
+    Str* str;
     TokenType type;
-    Str str;
-    int line;
-    int col;
 } Token;
 
-TokenType get_token(Token* tok);
-TokenType consume_token(Token* tok);
-const char* tok_to_str(TokenType type);
-void open_scanner_file(const char* fname);
+typedef struct {
+    Token* token;
+    char* buffer;
+    size_t size;
+    size_t head;
+    size_t tail;
+    const char* fname;
+    size_t line;
+    size_t col;
+} Scanner;
+
+void init_scanner(const char* fname);
+void destroy_scanner();
+Token* get_token();
+void consume_token();
+const char* tok_type_to_str(TokenType type);
+int scan_block();
+void skip_whitespace();
 
 #endif /* _SCANNER_H */

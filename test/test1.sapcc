@@ -9,26 +9,28 @@
 #    INCLUDE,      // "%include"
 #    SYNTAX,       // "%syntax"
 
-
-%verbosity 24
-%prefix "some_name_"
-%name "fname_"
-%code {
-    // THis is some C code
-}
-%include "a-file-name.txt"
-%syntax {
-    // This is C code.
+%header {
+    // This is some raw C code that is prepended to the beginning of the parser
+    // header file.
 }
 
-# This is an example of a set of parser rules.
-%parser
-  # The code defined in this block will be placed near the beginning of the
-  # generated code for the parser.
-  %code {
-    // This is C code that is copied without modifications to the output of
-    // the compiler generator.
-  }
+%source {
+    // This is some raw C code prepended to the parser code.
+    if() {
+        while() {
+        }
+    }
+}
+
+%tokens {
+    NAMESPACE
+    SYMBOL
+    CLASS
+    OBRACE@
+    CBRACE@
+}
+
+%grammar {
 
   # This rule demonstrates a recursive list. The recursive element must be first
   # and left recursion is not supported.
@@ -46,6 +48,13 @@
     : module_element {
       // C code.
     }
+    ; {
+        // This code is called when the node is visited by the AST walker.
+        if() {
+            while() {
+            }
+        }
+    }
 
   # This rule demonstrates that several different non-terminals can make a
   # rule.
@@ -53,75 +62,30 @@
     : namespace_definition {}
     : class_definition {}
     : include_definition {}
+    ; {}
 
   # This rule demonstrates an indirectly recursive rule.
   namespace_definition {}
     : NAMESPACE SYMBOL OBRACE module CBRACE {}
+    ; {}
 
   # This rule demonstrates that blank rules are not allowed.
   class_definition {}
     : CLASS SYMBOL OPAREN SYMBOL CPAREN class_body {}
     : CLASS SYMBOL OPAREN CPAREN class_body {}
     : CLASS SYMBOL class_body {}
+    ; {}
 
   # The scanner supports having multiple files open for inclusion.
   include_definition {}
     : INCLUDE SYMBOL {}
+    ; {}
 
   # This is left empty, but that is not correct syntax. Don't want to write a whole
   # grammar in this example.
   class_body {}
     : ass {}
+    ; {}
+}
 
-
-# This is an example scanner specification with explanations of the elements.
-# Comments can appear anywhere in the input file and start with a '#' and end at the new line.
-
-# The is the general form of a scanner block.
-%scanner
-  %code {
-    // note that this C code is copied to the beginning of the scanner source file verbatim.
-    static struct some_code {
-     int blabla;
-    };
-  }
-
-  # These rules do not have any code defined, but the {} are still required.
-  # Patterns for string literals are enclosed in "".
-  PLUS: "+" {} # This defines a name of PLUS and is recognized with a "+" is seen.
-  ADD_ASSIGN: "+=" {} # This defines a name of ADD_ASSIGN and is recognized with "+=" is seen.
-  CLASS : "class" {} # Recognize a random keyword.
-
-  # This rule defines a generic symbol.
-  # Patterns for regular expressions are enclosed in ()
-  SYMB: ([a-zA-Z_][a-zA-Z_0-9]*) {
-    // Look up the name or something, or nothing at all. This code is copied to the inside
-    // of the function that recognizes the pattern and it is executed as the function is
-    // returning.
-  }
-
-  # This rule defines a complex number.
-  # Note that every element in the expression is enclosed in a range. The range is expanded
-  # and matched in order according to the rules.
-  NUM: ([0-9]+[[.][0-9]+[[eE][+-]?[0-9]+]?]?) {
-    // The token has a void pointer that you can use to return arbitrary information.
-    token.data = allocate_obj(sizeof(double));
-    *((double*)data) = strtod(token.string, NULL);
-    // The symbol NUM is created by this definition and it will be the type assigned to the
-    // token when the parser receives it. Notice that there are multiple patterns embedded
-    // in the rule.
-  }
-
-  # This rule recognizes spaces and runs code when they are found, but does not return it
-  # to the parser.
-  : ([ \t\n\r]+) {
-    // Line and column numbers are already tracked by the scanner.
-  }
-
-  # This rule recognizes a quoted string that includes newlines. The '.' recognizes all
-  # characters that are printable but not white space. If you leave out the new lines
-  # then the rule will cause a scanner error if there is no quote encountered before the
-  # new line. All characters are copied to the token string, including the enclosing quotes.
-  QSTR: (["][ \n\r\t.]*["]) {}
-
-
+# This is a comment
