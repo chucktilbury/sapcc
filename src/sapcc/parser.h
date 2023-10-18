@@ -6,13 +6,19 @@
 #include "util.h"
 
 typedef PtrList NonTermList;
+typedef PtrListIter NonTermListIter;
+
 typedef PtrList TermList;
+typedef PtrListIter TermListIter;
+
 typedef PtrList RuleList;
+typedef PtrListIter RuleListIter;
 
 typedef struct {
     Str* name;
     bool keep;
     int ref;
+    int val;
 } Terminal;
 
 // Rules to match the non-terminal.
@@ -27,6 +33,7 @@ typedef struct {
     Str* pre_match;
     Str* post_match;
     int ref;
+    int val;
 } NonTerminal;
 
 typedef struct {
@@ -38,11 +45,13 @@ typedef struct {
 
 void init_parser();
 void destroy_parser();
-int parser();
+Parser* parser();
 void dump_parser();
 
 int get_num_term();
 int get_num_nterm();
+TermList* get_term_list();
+NonTermList* get_nterm_list();
 
 extern CmdLine cmd;
 

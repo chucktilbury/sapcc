@@ -3,11 +3,12 @@ project(rdpgen_exe)
 
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 #set(CMAKE_BUILD_TYPE release)
-set(CMAKE_BUILD_TYPE debug)
 #set(CMAKE_C_COMPILER "/usr/bin/clang")
 #set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-#set(CMAKE_C_COMPILER "/usr/bin/gcc")
-#set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+#set(CMAKE_C_COMPILER /usr/bin/gcc)
+#set(CMAKE_CXX_COMPILER /usr/bin/g++)
+
+set(CMAKE_BUILD_TYPE debug)
 
 set(LIBRARY_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")
 set(EXECUTABLE_OUTPUT_PATH "${PROJECT_SOURCE_DIR}/bin")

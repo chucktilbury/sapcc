@@ -1,4 +1,8 @@
 
+%header {}
+
+%source {}
+
 %tokens {
     NAMESPACE
     CLASS

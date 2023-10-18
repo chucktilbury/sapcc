@@ -2,6 +2,7 @@
 #include "parser.h"
 #include "scanner.h"
 #include "util.h"
+#include "errors.h"
 
 CmdLine cmd;
 /*
@@ -37,21 +38,22 @@ int main(int argc, char** argv) {
     add_cmd(cmd, "", "file", "File name of the grammar to generate.", NULL, CMD_REQD | CMD_STR);
     parse_cmd_line(cmd, argc, argv);
 
-    int success;
     init_parser();
 
-    success = parser();
-
-    if(10 <= VERBOSITY()) {
-        dump_parser();
-    }
+    parser();
 
     if(1 <= VERBOSITY())
-        printf("%s\n", success? "failed": "success");
+        printf("%s\n", get_errors()? "failed": "success");
 
     if(2 <= VERBOSITY())
         printf("\nstatistics:\nterminals: %d\nnon-terminals: %d\n",
                get_num_term(), get_num_nterm());
 
-    return success;
+#ifdef ENABLE_DUMP
+    if(9 <= VERBOSITY()) {
+        dump_parser();
+    }
+#endif
+
+    return 0;
 }

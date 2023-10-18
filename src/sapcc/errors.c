@@ -11,10 +11,15 @@ void syntax_error(const char* fmt, ...) {
 
     va_list args;
 
-    fprintf(stderr, "Syntax Error: %s:%d:%d: ",
-            get_fname(),
-            get_line_no(),
-            get_col_no());
+    if(get_line_no() > 0) {
+        fprintf(stderr, "Syntax Error: %s:%d:%d: ",
+                get_fname(),
+                get_line_no(),
+                get_col_no());
+    }
+    else {
+        fprintf(stderr, "Syntax Error: ");
+    }
 
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
@@ -29,10 +34,13 @@ void warning(const char* fmt, ...) {
 
     va_list args;
 
-    fprintf(stderr, "Warning: %s:%d:%d: ",
-            get_fname(),
-            get_line_no(),
-            get_col_no());
+    if(get_line_no() > 0)
+        fprintf(stderr, "Warning: %s:%d:%d: ",
+                get_fname(),
+                get_line_no(),
+                get_col_no());
+    else
+        fprintf(stderr, "Warning: ");
 
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);

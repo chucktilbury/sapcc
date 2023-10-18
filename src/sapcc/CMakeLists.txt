@@ -35,7 +35,7 @@ target_compile_options(${PROJECT_NAME}
         $<$<CONFIG:DEBUG>:-g >
         #$<$<CONFIG:DEBUG>:-Og >
         #$<$<CONFIG:DEBUG>:-DMEMORY_DEBUG >
-        $<$<CONFIG:DEBUG>:-DENABLE_TRACE >
+        $<$<CONFIG:DEBUG>:-DENABLE_LOGGER >
         $<$<CONFIG:DEBUG>:-DENABLE_DUMP >
         $<$<CONFIG:RELEASE>:-Ofast >
         $<$<CONFIG:PROFILE>:-pg -O0 >

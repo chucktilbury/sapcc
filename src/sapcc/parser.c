@@ -3,6 +3,7 @@
 #include "errors.h"
 #include "logger.h"
 
+#define PLEVEL  10
 static Parser* parser_state;
 
 static Rule* create_rule() {
@@ -31,14 +32,14 @@ static void add_rule_list(RuleList* ptr, Rule* val) {
     add_ptr_list((PtrList*)ptr, (void*)val);
 }
 
-static void reset_rule_list(RuleList* ptr) {
+static RuleListIter* init_rule_list_iter(RuleList* ptr) {
 
-    reset_ptr_list((PtrList*)ptr);
+    return init_ptr_list_iter((PtrList*)ptr);
 }
 
-static Rule* iterate_rule_list(RuleList* ptr) {
+static Rule* iterate_rule_list(RuleListIter* iter, RuleList* ptr) {
 
-    return (Rule*)iterate_ptr_list((PtrList*)ptr);
+    return (Rule*)iterate_ptr_list((PtrListIter*) iter, (PtrList*)ptr);
 }
 
 static RuleList* create_rule_list() {
@@ -50,8 +51,8 @@ static RuleList* create_rule_list() {
 static void destroy_rule_list(RuleList* ptr) {
 
     Rule* tmp;
-    reset_rule_list(ptr);
-    while(NULL != (tmp = iterate_rule_list(ptr)))
+    RuleListIter* rli = init_rule_list_iter(ptr);
+    while(NULL != (tmp = iterate_rule_list(rli, ptr)))
         destroy_rule(tmp);
 
     destroy_ptr_list((PtrList*)ptr);
@@ -68,6 +69,8 @@ static NonTerminal* create_nonterminal() {
     ptr->pre_match = create_string(NULL);
     ptr->post_match  = create_string(NULL);
     ptr->list  = create_rule_list();
+    ptr->ref = 0;
+    ptr->val = 0;
 
     return ptr;
 }
@@ -91,14 +94,14 @@ static void add_nterm_list(NonTermList* ptr, NonTerminal* val) {
     add_ptr_list((PtrList*)ptr, (void*)val);
 }
 
-static void reset_nterm_list(NonTermList* ptr) {
+static NonTermListIter* init_nterm_list_iter(NonTermList* ptr) {
 
-    reset_ptr_list((PtrList*)ptr);
+    return init_ptr_list_iter((PtrList*)ptr);
 }
 
-static NonTerminal* iterate_nterm_list(NonTermList* ptr) {
+static NonTerminal* iterate_nterm_list(NonTermListIter* iter, NonTermList* ptr) {
 
-    return (NonTerminal*)iterate_ptr_list((PtrList*)ptr);
+    return (NonTerminal*)iterate_ptr_list(iter, ptr);
 }
 
 static NonTermList* create_nterm_list() {
@@ -110,8 +113,8 @@ static NonTermList* create_nterm_list() {
 static void destroy_nterm_list(NonTermList* ptr) {
 
     NonTerminal* tmp;
-    reset_nterm_list(ptr);
-    while(NULL != (tmp = iterate_nterm_list(ptr)))
+    NonTermListIter* ntli = init_nterm_list_iter(ptr);
+    while(NULL != (tmp = iterate_nterm_list(ntli, ptr)))
         destroy_nonterminal(tmp);
 
     destroy_ptr_list((PtrList*)ptr);
@@ -126,6 +129,7 @@ static Terminal* create_terminal() {
     ptr->name = create_string(NULL);
     ptr->keep = false;
     ptr->ref = 0;
+    ptr->val = 0;
 
     return ptr;
 }
@@ -143,14 +147,14 @@ static void add_term_list(TermList* ptr, Terminal* val) {
     add_ptr_list((PtrList*)ptr, (void*)val);
 }
 
-static void reset_term_list(TermList* ptr) {
+static TermListIter* init_term_list_iter(TermList* ptr) {
 
-    reset_ptr_list((PtrList*)ptr);
+    return init_ptr_list_iter(ptr);
 }
 
-static Terminal* iterate_term_list(TermList* ptr) {
+static Terminal* iterate_term_list(TermListIter* iter, TermList* ptr) {
 
-    return (Terminal*)iterate_ptr_list((PtrList*)ptr);
+    return (Terminal*)iterate_ptr_list(iter, ptr);
 }
 
 static TermList* create_term_list() {
@@ -164,8 +168,8 @@ static void destroy_term_list(TermList* ptr) {
     assert(ptr != NULL);
 
     Terminal* tmp;
-    reset_term_list(ptr);
-    while(NULL != (tmp = iterate_term_list(ptr)))
+    TermListIter* tli = init_term_list_iter(ptr);
+    while(NULL != (tmp = iterate_term_list(tli, ptr)))
         destroy_terminal(tmp);
 
     destroy_ptr_list((PtrList*)ptr);
@@ -207,6 +211,7 @@ static int parse_source() {
 static int parse_tokens() {
 
     Token* tok = get_token();
+    int value = 500;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
@@ -225,6 +230,7 @@ static int parse_tokens() {
             }
             term->name = copy_string(tok->str);
             term->ref = 0;
+            term->val = value++;
             add_term_list(parser_state->terminals, term);
             consume_token();
         }
@@ -344,6 +350,7 @@ static int parse_rules(NonTerminal* nterm) {
 static int parse_grammar() {
 
     Token* tok = get_token();
+    int value = 1000;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
@@ -375,6 +382,10 @@ static int parse_grammar() {
             if(parse_rules(ptr)) {
                 return 1;
             }
+
+            ptr->ref = 0;
+            ptr->val = value++;
+
             // add it to the list
             add_nterm_list(parser_state->non_terminals, ptr);
         }
@@ -395,20 +406,21 @@ static int parse_grammar() {
 
 static void dump_terminal(Terminal* term) {
 
-    printf("\t%s:\t", raw_string(term->name));
-    printf("keep:%s:\t", term->keep? "true ": "false");
+    printf("\t%-20s", raw_string(term->name));
+    printf("keep:%-7s", term->keep? "true ": "false");
+    printf("value:%-6d", term->val);
     printf("references:%d\n", term->ref);
 }
 
 static void dump_rules(NonTerminal* nterm) {
 
     Rule* rule;
-    reset_rule_list(nterm->list);
-    while(NULL != (rule = iterate_rule_list(nterm->list))) {
+    RuleListIter* rli = init_rule_list_iter(nterm->list);
+    while(NULL != (rule = iterate_rule_list(rli, nterm->list))) {
         printf("\t: ");
         Str* s;
-        reset_str_list(rule->list);
-        while(NULL != (s = iterate_str_list(rule->list))) {
+        StrListIter* sli = init_str_list_iter(rule->list);
+        while(NULL != (s = iterate_str_list(sli, rule->list))) {
             printf("%s ", raw_string(s));
         }
         printf("%s\n", raw_string(rule->match));
@@ -417,41 +429,151 @@ static void dump_rules(NonTerminal* nterm) {
 
 static void dump_nonterminal(NonTerminal* nterm) {
 
-    printf("%s\n", raw_string(nterm->name));
+    printf("%s\t", raw_string(nterm->name));
+    printf("value:%d\t", nterm->val);
+    printf("references:%d\n", nterm->ref);
     printf("\tpre-match: %s\n", raw_string(nterm->pre_match));
     printf("\tpost-match: %s\n", raw_string(nterm->post_match));
     dump_rules(nterm);
-    printf("\treferences:%d\n\n", nterm->ref);
+    printf("\n");
 }
 
 void dump_parser() {
 
-    Str* str;
-    Terminal* term;
-    NonTerminal* nterm;
-
     printf("dump the parser\n");
 
-    reset_str_list(parser_state->headers);
+    Str* str;
+    StrListIter* sli;
+
+    sli = init_str_list_iter(parser_state->headers);
     printf("HEADERS:\n");
-    while(NULL != (str = iterate_str_list(parser_state->headers)))
+    while(NULL != (str = iterate_str_list(sli, parser_state->headers)))
         printf("%s\n", raw_string(str));
 
-    reset_str_list(parser_state->sources);
+    sli = init_str_list_iter(parser_state->sources);
     printf("\nSOURCES:\n");
-    while(NULL != (str = iterate_str_list(parser_state->sources)))
+    while(NULL != (str = iterate_str_list(sli, parser_state->sources)))
         printf("%s\n", raw_string(str));
 
-    reset_term_list(parser_state->terminals);
+    Terminal* term;
+    TermListIter* tli = init_term_list_iter(parser_state->terminals);
     printf("\nTERMINALS:\n");
-    while(NULL != (term = iterate_term_list(parser_state->terminals)))
+    while(NULL != (term = iterate_term_list(tli, parser_state->terminals)))
         dump_terminal(term);
 
-    reset_nterm_list(parser_state->non_terminals);
+    NonTerminal* nterm;
+    NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
     printf("\nNON-TERMINALS:\n");
-    while(NULL != (nterm = iterate_nterm_list(parser_state->non_terminals)))
+    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals)))
         dump_nonterminal(nterm);
 
+}
+
+/*
+ * Verify that there are no terminals and non-terminals with the same name.
+ */
+static void check_duplicates() {
+
+    LOG(PLEVEL, "ENTER: check duplicates");
+
+    Terminal* term;
+    TermListIter* tli = init_term_list_iter(parser_state->terminals);
+    while(NULL != (term = iterate_term_list(tli, parser_state->terminals))) {
+        NonTerminal* nterm;
+        NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
+        while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+            if(!comp_string(term->name, nterm->name)) {
+                fprintf(stderr, "Syntax Error: terminal and non-terminal have the same name: %s",
+                            raw_string(term->name));
+                return;
+            }
+        }
+    }
+
+    LOG(PLEVEL, "LEAVE: check duplicates");
+}
+
+static void increment_reference(Str* str) {
+
+    LOG(PLEVEL, "ENTER: increment references: %s", raw_string(str));
+
+    // Iterate the terminals and the non-terminals and publish a warning if
+    // they are not referenced.
+    Terminal* term;
+    TermListIter* tli = init_term_list_iter(parser_state->terminals);
+    while(NULL != (term = iterate_term_list(tli, parser_state->terminals))) {
+        if(!comp_string(term->name, str)) {
+            term->ref++;
+            LOG(PLEVEL, "LEAVE: increment references: %s", raw_string(term->name));
+            return;
+        }
+    }
+
+    NonTerminal* nterm;
+    NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
+    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+        if(!comp_string(nterm->name, str)) {
+            nterm->ref++;
+            LOG(PLEVEL, "LEAVE: increment references: %s", raw_string(nterm->name));
+            return;
+        }
+    }
+
+    LOG(PLEVEL, "LEAVE: increment references");
+}
+
+/*
+ * Update the reference numbers.
+ */
+static void update_references() {
+
+    LOG(PLEVEL, "ENTER: update references");
+
+    // iterate the rules and update the terminal and non-terminal references
+    NonTerminal* nterm;
+    NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
+    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+        Rule* rule;
+        RuleListIter* rli = init_rule_list_iter(nterm->list);
+        while(NULL != (rule = iterate_rule_list(rli, nterm->list))) {
+            Str* str;
+            StrListIter* sli = init_str_list_iter(rule->list);
+            while(NULL != (str = iterate_str_list(sli, rule->list))) {
+                increment_reference(str);
+            }
+        }
+    }
+    LOG(PLEVEL, "ENTER: update references");
+}
+
+/*
+ * Verify that all of the terminals and non-terminals are referenced in the
+ * grammar.
+ */
+static void check_references() {
+
+    LOG(PLEVEL, "ENTER: check references");
+
+    // Iterate the terminals and the non-terminals and publish a warning if
+    // they are not referenced.
+    Terminal* term;
+    TermListIter* tli = init_term_list_iter(parser_state->terminals);
+    while(NULL != (term = iterate_term_list(tli, parser_state->terminals))) {
+        if(term->ref == 0)
+            warning("terminal symbol \"%s\" has no references in grammar",
+                    raw_string(term->name));
+    }
+
+    NonTerminal* nterm;
+    NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
+    // first non-terminal in the list never has references
+    iterate_nterm_list(ntli, parser_state->non_terminals);
+    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+        if(nterm->ref == 0)
+            warning("non-terminal symbol \"%s\" has no references in grammar",
+                    raw_string(nterm->name));
+    }
+    LOG(PLEVEL, "ENTER: check references");
 }
 
 /*
@@ -478,30 +600,30 @@ void destroy_parser() {
     _FREE(parser_state);
 }
 
-int parser() {
+Parser* parser() {
 
     Token* tok;
-    int retv = 0;
+    int errors = 0;
 
     tok = get_token();
     while(tok->type != END_OF_INPUT) {
         switch(tok->type) {
             case GRAMMAR:
                 consume_token();
-                retv += parse_grammar();
+                errors += parse_grammar();
                 break;
             case TOKENS:
                 consume_token();
-                retv += parse_tokens();
+                errors += parse_tokens();
                 break;
             case SOURCE:
                 consume_token();
-                retv += parse_source();
+                errors += parse_source();
                 consume_token();
                 break;
             case HEADER:
                 consume_token();
-                retv += parse_header();
+                errors += parse_header();
                 consume_token();
                 break;
             case END_OF_INPUT:
@@ -510,16 +632,19 @@ int parser() {
             default:
                 syntax_error("expected a directive but got a %s", tok_type_to_str(tok->type));
                 consume_token();
-                retv++;
+                errors++;
                 break;
         }
 
-        if(retv > 10)
-            break;
+        if(errors > 10)
+            return NULL;
         tok = get_token();
     }
 
-    return retv;
+    check_duplicates();
+    update_references();
+    check_references();
+    return parser_state;
 }
 
 int get_num_term() {
@@ -529,3 +654,12 @@ int get_num_term() {
 int get_num_nterm() {
     return parser_state->non_terminals->len;
 }
+
+TermList* get_term_list() {
+    return parser_state->terminals;
+}
+
+NonTermList* get_nterm_list() {
+    return parser_state->non_terminals;
+}
+

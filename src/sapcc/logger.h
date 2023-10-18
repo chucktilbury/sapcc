@@ -1,10 +1,10 @@
 #ifndef _LOGGER_H
 #define _LOGGER_H
 
+#ifdef ENABLE_LOGGER
 #include "util.h"
 extern CmdLine cmd;
 
-#define VERBOSITY() get_cmd_int(cmd, "verbo")
 #define STREAM  stdout
 
 #define LOG(n, fmt, ...) do { \
@@ -13,6 +13,10 @@ extern CmdLine cmd;
             fputc('\n', STREAM); \
         } \
     } while(0)
+#else
+#define LOG(n, f, ...)
+#endif
 
+#define VERBOSITY() get_cmd_int(cmd, "verbo")
 
 #endif /* _LOGGER_H */
