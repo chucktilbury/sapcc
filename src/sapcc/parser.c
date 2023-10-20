@@ -37,9 +37,9 @@ static RuleListIter* init_rule_list_iter(RuleList* ptr) {
     return init_ptr_list_iter((PtrList*)ptr);
 }
 
-static Rule* iterate_rule_list(RuleListIter* iter, RuleList* ptr) {
+static Rule* iterate_rule_list(RuleListIter* iter) {
 
-    return (Rule*)iterate_ptr_list((PtrListIter*) iter, (PtrList*)ptr);
+    return (Rule*)iterate_ptr_list((PtrListIter*) iter);
 }
 
 static RuleList* create_rule_list() {
@@ -52,7 +52,7 @@ static void destroy_rule_list(RuleList* ptr) {
 
     Rule* tmp;
     RuleListIter* rli = init_rule_list_iter(ptr);
-    while(NULL != (tmp = iterate_rule_list(rli, ptr)))
+    while(NULL != (tmp = iterate_rule_list(rli)))
         destroy_rule(tmp);
 
     destroy_ptr_list((PtrList*)ptr);
@@ -99,9 +99,9 @@ static NonTermListIter* init_nterm_list_iter(NonTermList* ptr) {
     return init_ptr_list_iter((PtrList*)ptr);
 }
 
-static NonTerminal* iterate_nterm_list(NonTermListIter* iter, NonTermList* ptr) {
+static NonTerminal* iterate_nterm_list(NonTermListIter* iter) {
 
-    return (NonTerminal*)iterate_ptr_list(iter, ptr);
+    return (NonTerminal*)iterate_ptr_list(iter);
 }
 
 static NonTermList* create_nterm_list() {
@@ -114,7 +114,7 @@ static void destroy_nterm_list(NonTermList* ptr) {
 
     NonTerminal* tmp;
     NonTermListIter* ntli = init_nterm_list_iter(ptr);
-    while(NULL != (tmp = iterate_nterm_list(ntli, ptr)))
+    while(NULL != (tmp = iterate_nterm_list(ntli)))
         destroy_nonterminal(tmp);
 
     destroy_ptr_list((PtrList*)ptr);
@@ -152,9 +152,9 @@ static TermListIter* init_term_list_iter(TermList* ptr) {
     return init_ptr_list_iter(ptr);
 }
 
-static Terminal* iterate_term_list(TermListIter* iter, TermList* ptr) {
+static Terminal* iterate_term_list(TermListIter* iter) {
 
-    return (Terminal*)iterate_ptr_list(iter, ptr);
+    return (Terminal*)iterate_ptr_list(iter);
 }
 
 static TermList* create_term_list() {
@@ -169,7 +169,7 @@ static void destroy_term_list(TermList* ptr) {
 
     Terminal* tmp;
     TermListIter* tli = init_term_list_iter(ptr);
-    while(NULL != (tmp = iterate_term_list(tli, ptr)))
+    while(NULL != (tmp = iterate_term_list(tli)))
         destroy_terminal(tmp);
 
     destroy_ptr_list((PtrList*)ptr);
@@ -416,11 +416,11 @@ static void dump_rules(NonTerminal* nterm) {
 
     Rule* rule;
     RuleListIter* rli = init_rule_list_iter(nterm->list);
-    while(NULL != (rule = iterate_rule_list(rli, nterm->list))) {
+    while(NULL != (rule = iterate_rule_list(rli))) {
         printf("\t: ");
         Str* s;
         StrListIter* sli = init_str_list_iter(rule->list);
-        while(NULL != (s = iterate_str_list(sli, rule->list))) {
+        while(NULL != (s = iterate_str_list(sli))) {
             printf("%s ", raw_string(s));
         }
         printf("%s\n", raw_string(rule->match));
@@ -447,24 +447,24 @@ void dump_parser() {
 
     sli = init_str_list_iter(parser_state->headers);
     printf("HEADERS:\n");
-    while(NULL != (str = iterate_str_list(sli, parser_state->headers)))
+    while(NULL != (str = iterate_str_list(sli)))
         printf("%s\n", raw_string(str));
 
     sli = init_str_list_iter(parser_state->sources);
     printf("\nSOURCES:\n");
-    while(NULL != (str = iterate_str_list(sli, parser_state->sources)))
+    while(NULL != (str = iterate_str_list(sli)))
         printf("%s\n", raw_string(str));
 
     Terminal* term;
     TermListIter* tli = init_term_list_iter(parser_state->terminals);
     printf("\nTERMINALS:\n");
-    while(NULL != (term = iterate_term_list(tli, parser_state->terminals)))
+    while(NULL != (term = iterate_term_list(tli)))
         dump_terminal(term);
 
     NonTerminal* nterm;
     NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
     printf("\nNON-TERMINALS:\n");
-    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals)))
+    while(NULL != (nterm = iterate_nterm_list(ntli)))
         dump_nonterminal(nterm);
 
 }
@@ -478,10 +478,10 @@ static void check_duplicates() {
 
     Terminal* term;
     TermListIter* tli = init_term_list_iter(parser_state->terminals);
-    while(NULL != (term = iterate_term_list(tli, parser_state->terminals))) {
+    while(NULL != (term = iterate_term_list(tli))) {
         NonTerminal* nterm;
         NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
-        while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+        while(NULL != (nterm = iterate_nterm_list(ntli))) {
             if(!comp_string(term->name, nterm->name)) {
                 fprintf(stderr, "Syntax Error: terminal and non-terminal have the same name: %s",
                             raw_string(term->name));
@@ -501,7 +501,7 @@ static void increment_reference(Str* str) {
     // they are not referenced.
     Terminal* term;
     TermListIter* tli = init_term_list_iter(parser_state->terminals);
-    while(NULL != (term = iterate_term_list(tli, parser_state->terminals))) {
+    while(NULL != (term = iterate_term_list(tli))) {
         if(!comp_string(term->name, str)) {
             term->ref++;
             LOG(PLEVEL, "LEAVE: increment references: %s", raw_string(term->name));
@@ -511,7 +511,7 @@ static void increment_reference(Str* str) {
 
     NonTerminal* nterm;
     NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
-    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+    while(NULL != (nterm = iterate_nterm_list(ntli))) {
         if(!comp_string(nterm->name, str)) {
             nterm->ref++;
             LOG(PLEVEL, "LEAVE: increment references: %s", raw_string(nterm->name));
@@ -532,13 +532,13 @@ static void update_references() {
     // iterate the rules and update the terminal and non-terminal references
     NonTerminal* nterm;
     NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
-    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+    while(NULL != (nterm = iterate_nterm_list(ntli))) {
         Rule* rule;
         RuleListIter* rli = init_rule_list_iter(nterm->list);
-        while(NULL != (rule = iterate_rule_list(rli, nterm->list))) {
+        while(NULL != (rule = iterate_rule_list(rli))) {
             Str* str;
             StrListIter* sli = init_str_list_iter(rule->list);
-            while(NULL != (str = iterate_str_list(sli, rule->list))) {
+            while(NULL != (str = iterate_str_list(sli))) {
                 increment_reference(str);
             }
         }
@@ -558,7 +558,7 @@ static void check_references() {
     // they are not referenced.
     Terminal* term;
     TermListIter* tli = init_term_list_iter(parser_state->terminals);
-    while(NULL != (term = iterate_term_list(tli, parser_state->terminals))) {
+    while(NULL != (term = iterate_term_list(tli))) {
         if(term->ref == 0)
             warning("terminal symbol \"%s\" has no references in grammar",
                     raw_string(term->name));
@@ -567,8 +567,8 @@ static void check_references() {
     NonTerminal* nterm;
     NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
     // first non-terminal in the list never has references
-    iterate_nterm_list(ntli, parser_state->non_terminals);
-    while(NULL != (nterm = iterate_nterm_list(ntli, parser_state->non_terminals))) {
+    iterate_nterm_list(ntli);
+    while(NULL != (nterm = iterate_nterm_list(ntli))) {
         if(nterm->ref == 0)
             warning("non-terminal symbol \"%s\" has no references in grammar",
                     raw_string(nterm->name));

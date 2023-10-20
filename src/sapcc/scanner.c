@@ -59,7 +59,7 @@ static Token* create_token() {
 
 static void reset_token(Token* tok) {
 
-    truncate_string(tok->str, 0);
+    clear_string(tok->str);
 }
 
 static void destroy_token(Token* tok) {
@@ -92,6 +92,7 @@ static void get_word() {
 static void get_keyword() {
 
     get_word();
+printf("scanner keyword: \"%s\"\n", raw_string(scanner_state->token->str));
     if(!comp_string_const(scanner_state->token->str, "%tokens"))
         scanner_state->token->type = TOKENS;
     else if(!comp_string_const(scanner_state->token->str, "%grammar"))
