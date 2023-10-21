@@ -238,6 +238,7 @@ bool_literal {}
 primary {}
     : compound_reference {}
     : const_expression {}
+    : cast_expr {}
     : OPAREN expression CPAREN {}
     ; {}
 
@@ -250,24 +251,48 @@ const_expression {}
     ; {}
 
 expression {}
-    : primary {}
-    : expression AND expression {}
-    : expression OR expression {}
-    : expression EQU expression {}
-    : expression NEQU expression {}
-    : expression LORE expression {}
-    : expression GORE expression {}
-    : expression OPOINT expression {}
-    : expression CPOINT expression {}
-    : expression ADD expression {}
-    : expression SUB expression {}
-    : expression MUL expression {}
-    : expression DIV expression {}
-    : expression MOD expression {}
-    : expression POW expression {}
+    : expr_or {}
+    ; {}
+
+expr_or {}
+    : expr_and OR expr_or {}
+    ; {}
+
+expr_and {}
+    : expr_equ AND expr_and {}
+    ; {}
+
+expr_equ {}
+    : expr_comp EQU expr_equ {}
+    : expr_comp NEQU expr_equ {}
+    ; {}
+
+expr_comp {}
+    : expr_term LORE expr_comp {}
+    : expr_term GORE expr_comp {}
+    : expr_term CPOINT expr_comp {}
+    : expr_term OPOINT expr_comp {}
+    ; {}
+
+expr_term {}
+    : expr_pow ADD expr_term {}
+    : expr_pow SUM expr_term {}
+    ; {}
+
+expr_pow {}
+    : expr_fact POW expr_pow {}
+    ; {}
+
+expr_fact {}
+    : expr_unary MUL expr_fact {}
+    : expr_unary DIV expr_fact {}
+    : expr_unary MOD expr_fact {}
+    ; {}
+
+expr_unary {}
     : NOT expression {}
     : SUB expression {}
-    : cast_expr {}
+    : primary {}
     ; {}
 
 cast_expr {}

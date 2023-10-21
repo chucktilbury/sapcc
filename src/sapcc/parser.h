@@ -1,8 +1,8 @@
 #ifndef _PARSER_H
 #define _PARSER_H
 
-#include "scanner.h"
 #include "logger.h"
+#include "scanner.h"
 #include "util.h"
 
 typedef PtrList NonTermList;

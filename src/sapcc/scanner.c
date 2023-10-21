@@ -1,11 +1,11 @@
 
-#include "errors.h"
 #include "scanner.h"
-#include "util.h"
+#include "errors.h"
 #include "logger.h"
+#include "util.h"
 #include <stdarg.h>
 
-#define SLEVEL  20
+#define SLEVEL 20
 static int errors   = 0;
 static int warnings = 0;
 
@@ -15,8 +15,7 @@ static void scanner_error(const char* fmt, ...) {
 
     va_list args;
 
-    fprintf(stderr, "Scanner Error: %s: %lu: %lu: ",
-            scanner_state->fname, scanner_state->line, scanner_state->col);
+    fprintf(stderr, "Scanner Error: %s: %lu: %lu: ", scanner_state->fname, scanner_state->line, scanner_state->col);
 
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
@@ -29,8 +28,7 @@ static void scanner_warning(const char* fmt, ...) {
 
     va_list args;
 
-    fprintf(stderr, "Scanner Warning: %s: %lu: %lu: ",
-            scanner_state->fname, scanner_state->line, scanner_state->col);
+    fprintf(stderr, "Scanner Warning: %s: %lu: %lu: ", scanner_state->fname, scanner_state->line, scanner_state->col);
 
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
@@ -92,7 +90,7 @@ static void get_word() {
 static void get_keyword() {
 
     get_word();
-printf("scanner keyword: \"%s\"\n", raw_string(scanner_state->token->str));
+
     if(!comp_string_const(scanner_state->token->str, "%tokens"))
         scanner_state->token->type = TOKENS;
     else if(!comp_string_const(scanner_state->token->str, "%grammar"))
@@ -122,7 +120,7 @@ void init_scanner(const char* fname) {
 
     open_input_file(fname);
 
-    //scanner_state->logger = init_logger(stderr, 5, "Scanner");
+    // scanner_state->logger = init_logger(stderr, 5, "Scanner");
     scanner_state->head  = 0;
     scanner_state->tail  = 1;
     scanner_state->line  = 1;
@@ -204,8 +202,7 @@ void consume_token() {
                 break;
         }
     }
-    LOG(SLEVEL, "scanner: %d: %d: \"%s\" (%s)", get_line_no(), get_col_no(),
-        raw_string(scanner_state->token->str),
+    LOG(SLEVEL, "scanner: %d: %d: \"%s\" (%s)", get_line_no(), get_col_no(), raw_string(scanner_state->token->str),
         tok_type_to_str(scanner_state->token->type));
 }
 
@@ -246,14 +243,12 @@ int scan_block() {
         }
     }
     else {
-        syntax_error("expected a code block but got a %s",
-                     tok_type_to_str(scanner_state->token->type));
+        syntax_error("expected a code block but got a %s", tok_type_to_str(scanner_state->token->type));
         scanner_state->token->type = ERROR;
         return 0;
     }
 
-    LOG(SLEVEL, "scanner: %d: %d: \"%s\" (BLOCK)", get_line_no(), get_col_no(),
-        raw_string(scanner_state->token->str));
+    LOG(SLEVEL, "scanner: %d: %d: \"%s\" (BLOCK)", get_line_no(), get_col_no(), raw_string(scanner_state->token->str));
     scanner_state->token->type = BLOCK;
     return count;
 }

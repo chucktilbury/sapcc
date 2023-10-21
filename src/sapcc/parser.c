@@ -3,7 +3,7 @@
 #include "errors.h"
 #include "logger.h"
 
-#define PLEVEL  10
+#define PLEVEL 10
 static Parser* parser_state;
 
 static Rule* create_rule() {
@@ -39,7 +39,7 @@ static RuleListIter* init_rule_list_iter(RuleList* ptr) {
 
 static Rule* iterate_rule_list(RuleListIter* iter) {
 
-    return (Rule*)iterate_ptr_list((PtrListIter*) iter);
+    return (Rule*)iterate_ptr_list((PtrListIter*)iter);
 }
 
 static RuleList* create_rule_list() {
@@ -65,12 +65,12 @@ static NonTerminal* create_nonterminal() {
 
     NonTerminal* ptr = _ALLOC_T(NonTerminal);
 
-    ptr->name  = create_string(NULL);
-    ptr->pre_match = create_string(NULL);
-    ptr->post_match  = create_string(NULL);
-    ptr->list  = create_rule_list();
-    ptr->ref = 0;
-    ptr->val = 0;
+    ptr->name       = create_string(NULL);
+    ptr->pre_match  = create_string(NULL);
+    ptr->post_match = create_string(NULL);
+    ptr->list       = create_rule_list();
+    ptr->ref        = 0;
+    ptr->val        = 0;
 
     return ptr;
 }
@@ -126,10 +126,10 @@ static void destroy_nterm_list(NonTermList* ptr) {
 static Terminal* create_terminal() {
 
     Terminal* ptr = _ALLOC_T(Terminal);
-    ptr->name = create_string(NULL);
-    ptr->keep = false;
-    ptr->ref = 0;
-    ptr->val = 0;
+    ptr->name     = create_string(NULL);
+    ptr->keep     = false;
+    ptr->ref      = 0;
+    ptr->val      = 0;
 
     return ptr;
 }
@@ -211,7 +211,7 @@ static int parse_source() {
 static int parse_tokens() {
 
     Token* tok = get_token();
-    int value = 500;
+    int value  = 500;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
@@ -225,12 +225,12 @@ static int parse_tokens() {
         if(tok->type == SYMBOL) {
             Terminal* term = create_terminal();
             if(strrchr(raw_string(tok->str), '@')) {
-                truncate_string(tok->str, len_string(tok->str)-1);
+                truncate_string(tok->str, len_string(tok->str) - 1);
                 term->keep = true;
             }
             term->name = copy_string(tok->str);
-            term->ref = 0;
-            term->val = value++;
+            term->ref  = 0;
+            term->val  = value++;
             add_term_list(parser_state->terminals, term);
             consume_token();
         }
@@ -239,8 +239,7 @@ static int parse_tokens() {
             return 0;
         }
         else {
-            syntax_error("expected a terminal SYMBOL or a '}', but got a %s",
-                         tok_type_to_str(tok->type));
+            syntax_error("expected a terminal SYMBOL or a '}', but got a %s", tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -267,8 +266,7 @@ static int parse_rule(NonTerminal* nterm) {
             scan_block();
             tok = get_token();
             if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s",
-                            tok_type_to_str(tok->type));
+                syntax_error("expected a code BLOCK, but got a %s", tok_type_to_str(tok->type));
                 consume_token();
                 return 1;
             }
@@ -280,8 +278,7 @@ static int parse_rule(NonTerminal* nterm) {
             return 0;
         }
         else {
-            syntax_error("expected a rule SYMBOL or a code BLOCK, but got a %s",
-                         tok_type_to_str(tok->type));
+            syntax_error("expected a rule SYMBOL or a code BLOCK, but got a %s", tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -311,8 +308,7 @@ static int parse_rules(NonTerminal* nterm) {
             scan_block();
             tok = get_token();
             if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s",
-                            tok_type_to_str(tok->type));
+                syntax_error("expected a code BLOCK, but got a %s", tok_type_to_str(tok->type));
                 consume_token();
                 return 1;
             }
@@ -323,8 +319,7 @@ static int parse_rules(NonTerminal* nterm) {
             return 0;
         }
         else {
-            syntax_error("expected a ':' or a ';', but got a %s",
-                         tok_type_to_str(tok->type));
+            syntax_error("expected a ':' or a ';', but got a %s", tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -350,7 +345,7 @@ static int parse_rules(NonTerminal* nterm) {
 static int parse_grammar() {
 
     Token* tok = get_token();
-    int value = 1000;
+    int value  = 1000;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
@@ -363,14 +358,13 @@ static int parse_grammar() {
         tok = get_token();
         if(tok->type == SYMBOL) {
             NonTerminal* ptr = create_nonterminal();
-            ptr->name = copy_string(tok->str);
+            ptr->name        = copy_string(tok->str);
             consume_token();
 
             scan_block();
             tok = get_token();
             if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s",
-                            tok_type_to_str(tok->type));
+                syntax_error("expected a code BLOCK, but got a %s", tok_type_to_str(tok->type));
                 consume_token();
                 return 1;
             }
@@ -394,8 +388,7 @@ static int parse_grammar() {
             return 0;
         }
         else {
-            syntax_error("expected a non-terminal SYMBOL or a '}', but got a %s",
-                         tok_type_to_str(tok->type));
+            syntax_error("expected a non-terminal SYMBOL or a '}', but got a %s", tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -407,7 +400,7 @@ static int parse_grammar() {
 static void dump_terminal(Terminal* term) {
 
     printf("\t%-20s", raw_string(term->name));
-    printf("keep:%-7s", term->keep? "true ": "false");
+    printf("keep:%-7s", term->keep ? "true " : "false");
     printf("value:%-6d", term->val);
     printf("references:%d\n", term->ref);
 }
@@ -466,7 +459,6 @@ void dump_parser() {
     printf("\nNON-TERMINALS:\n");
     while(NULL != (nterm = iterate_nterm_list(ntli)))
         dump_nonterminal(nterm);
-
 }
 
 /*
@@ -483,8 +475,7 @@ static void check_duplicates() {
         NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
         while(NULL != (nterm = iterate_nterm_list(ntli))) {
             if(!comp_string(term->name, nterm->name)) {
-                fprintf(stderr, "Syntax Error: terminal and non-terminal have the same name: %s",
-                            raw_string(term->name));
+                fprintf(stderr, "Syntax Error: terminal and non-terminal have the same name: %s", raw_string(term->name));
                 return;
             }
         }
@@ -560,8 +551,7 @@ static void check_references() {
     TermListIter* tli = init_term_list_iter(parser_state->terminals);
     while(NULL != (term = iterate_term_list(tli))) {
         if(term->ref == 0)
-            warning("terminal symbol \"%s\" has no references in grammar",
-                    raw_string(term->name));
+            warning("terminal symbol \"%s\" has no references in grammar", raw_string(term->name));
     }
 
     NonTerminal* nterm;
@@ -570,8 +560,7 @@ static void check_references() {
     iterate_nterm_list(ntli);
     while(NULL != (nterm = iterate_nterm_list(ntli))) {
         if(nterm->ref == 0)
-            warning("non-terminal symbol \"%s\" has no references in grammar",
-                    raw_string(nterm->name));
+            warning("non-terminal symbol \"%s\" has no references in grammar", raw_string(nterm->name));
     }
     LOG(PLEVEL, "ENTER: check references");
 }
@@ -585,10 +574,10 @@ void init_parser() {
 
     init_scanner(get_cmd_raw(cmd, "file"));
 
-    parser_state->terminals = create_term_list();
+    parser_state->terminals     = create_term_list();
     parser_state->non_terminals = create_nterm_list();
-    parser_state->headers = create_str_list();
-    parser_state->sources = create_str_list();
+    parser_state->headers       = create_str_list();
+    parser_state->sources       = create_str_list();
 }
 
 void destroy_parser() {
@@ -648,11 +637,11 @@ Parser* parser() {
 }
 
 int get_num_term() {
-    return parser_state->terminals->len;
+    return len_list(parser_state->terminals);
 }
 
 int get_num_nterm() {
-    return parser_state->non_terminals->len;
+    return len_list(parser_state->non_terminals);
 }
 
 TermList* get_term_list() {
@@ -662,4 +651,3 @@ TermList* get_term_list() {
 NonTermList* get_nterm_list() {
     return parser_state->non_terminals;
 }
-

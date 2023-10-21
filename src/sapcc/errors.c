@@ -1,10 +1,10 @@
 
-#include <stdarg.h>
-#include "util.h"
 #include "parser.h"
 #include "scanner.h"
+#include "util.h"
+#include <stdarg.h>
 
-static int errors = 0;
+static int errors   = 0;
 static int warnings = 0;
 
 void syntax_error(const char* fmt, ...) {
@@ -12,10 +12,7 @@ void syntax_error(const char* fmt, ...) {
     va_list args;
 
     if(get_line_no() > 0) {
-        fprintf(stderr, "Syntax Error: %s:%d:%d: ",
-                get_fname(),
-                get_line_no(),
-                get_col_no());
+        fprintf(stderr, "Syntax Error: %s:%d:%d: ", get_fname(), get_line_no(), get_col_no());
     }
     else {
         fprintf(stderr, "Syntax Error: ");
@@ -35,10 +32,7 @@ void warning(const char* fmt, ...) {
     va_list args;
 
     if(get_line_no() > 0)
-        fprintf(stderr, "Warning: %s:%d:%d: ",
-                get_fname(),
-                get_line_no(),
-                get_col_no());
+        fprintf(stderr, "Warning: %s:%d:%d: ", get_fname(), get_line_no(), get_col_no());
     else
         fprintf(stderr, "Warning: ");
 
@@ -73,4 +67,3 @@ int get_warnings() {
 
     return warnings;
 }
-

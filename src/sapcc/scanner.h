@@ -1,9 +1,9 @@
 #ifndef _SCANNER_H
 #define _SCANNER_H
 
-#include <stddef.h>
-#include "util.h"
 #include "logger.h"
+#include "util.h"
+#include <stddef.h>
 
 typedef enum {
     END_OF_INPUT, // end of input

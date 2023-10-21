@@ -5,13 +5,14 @@
 #include "util.h"
 extern CmdLine cmd;
 
-#define STREAM  stdout
+#define STREAM stdout
 
-#define LOG(n, fmt, ...) do { \
-        if((n) <= VERBOSITY()) { \
+#define LOG(n, fmt, ...)                         \
+    do {                                         \
+        if((n) <= VERBOSITY()) {                 \
             fprintf(STREAM, fmt, ##__VA_ARGS__); \
-            fputc('\n', STREAM); \
-        } \
+            fputc('\n', STREAM);                 \
+        }                                        \
     } while(0)
 #else
 #define LOG(n, f, ...)
