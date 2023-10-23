@@ -7,6 +7,8 @@ add_executable(${PROJECT_NAME}
     errors.c
     scanner.c
     parser.c
+    emitters.c
+    paths.c
     main.c
 )
 
@@ -28,13 +30,8 @@ target_compile_options(${PROJECT_NAME}
         -Wall
         -Wextra
         -Wpedantic
-        #-Wno-sign-compare
-        #-Wno-unused-variable
-        #-Wno-parentheses-equality
         -DUSE_GC
         $<$<CONFIG:DEBUG>:-g >
-        #$<$<CONFIG:DEBUG>:-Og >
-        #$<$<CONFIG:DEBUG>:-DMEMORY_DEBUG >
         $<$<CONFIG:DEBUG>:-DENABLE_LOGGER >
         $<$<CONFIG:DEBUG>:-DENABLE_DUMP >
         $<$<CONFIG:RELEASE>:-Ofast >

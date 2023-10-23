@@ -10,7 +10,7 @@ static Rule* create_rule() {
 
     Rule* ptr  = _ALLOC_T(Rule);
     ptr->match = create_string(NULL);
-    ptr->list  = create_str_list();
+    ptr->list  = create_string_list();
 
     return ptr;
 }
@@ -19,7 +19,7 @@ static void destroy_rule(Rule* ptr) {
 
     if(ptr != NULL) {
         destroy_string(ptr->match);
-        destroy_str_list(ptr->list);
+        destroy_string_list(ptr->list);
         _FREE(ptr);
     }
 }
@@ -34,7 +34,7 @@ static void add_rule_list(RuleList* ptr, Rule* val) {
 
 static RuleListIter* init_rule_list_iter(RuleList* ptr) {
 
-    return init_ptr_list_iter((PtrList*)ptr);
+    return init_ptr_list_iterator((PtrList*)ptr);
 }
 
 static Rule* iterate_rule_list(RuleListIter* iter) {
@@ -96,7 +96,7 @@ static void add_nterm_list(NonTermList* ptr, NonTerminal* val) {
 
 static NonTermListIter* init_nterm_list_iter(NonTermList* ptr) {
 
-    return init_ptr_list_iter((PtrList*)ptr);
+    return init_ptr_list_iterator((PtrList*)ptr);
 }
 
 static NonTerminal* iterate_nterm_list(NonTermListIter* iter) {
@@ -149,7 +149,7 @@ static void add_term_list(TermList* ptr, Terminal* val) {
 
 static TermListIter* init_term_list_iter(TermList* ptr) {
 
-    return init_ptr_list_iter(ptr);
+    return init_ptr_list_iterator(ptr);
 }
 
 static Terminal* iterate_term_list(TermListIter* iter) {
@@ -180,7 +180,7 @@ static int parse_header() {
     int retv = 0;
 
     if(scan_block() > 0) {
-        add_str_list(parser_state->headers, copy_string(get_token()->str));
+        add_string_list(parser_state->headers, copy_string(get_token()->str));
     }
     else
         retv++;
@@ -193,7 +193,7 @@ static int parse_source() {
     int retv = 0;
 
     if(scan_block() > 0) {
-        add_str_list(parser_state->sources, copy_string(get_token()->str));
+        add_string_list(parser_state->sources, copy_string(get_token()->str));
     }
     else
         retv++;
@@ -225,7 +225,7 @@ static int parse_tokens() {
         if(tok->type == SYMBOL) {
             Terminal* term = create_terminal();
             if(strrchr(raw_string(tok->str), '@')) {
-                truncate_string(tok->str, len_string(tok->str) - 1);
+                truncate_string(tok->str, length_string(tok->str) - 1);
                 term->keep = true;
             }
             term->name = copy_string(tok->str);
@@ -259,7 +259,7 @@ static int parse_rule(NonTerminal* nterm) {
     while(true) {
         Token* tok = get_token();
         if(tok->type == SYMBOL) {
-            add_str_list(rule->list, copy_string(tok->str));
+            add_string_list(rule->list, copy_string(tok->str));
             consume_token();
         }
         else if(tok->type == OBRACE) {
@@ -412,8 +412,8 @@ static void dump_rules(NonTerminal* nterm) {
     while(NULL != (rule = iterate_rule_list(rli))) {
         printf("\t: ");
         Str* s;
-        StrListIter* sli = init_str_list_iter(rule->list);
-        while(NULL != (s = iterate_str_list(sli))) {
+        StrListIter* sli = init_string_list_iterator(rule->list);
+        while(NULL != (s = iterate_string_list(sli))) {
             printf("%s ", raw_string(s));
         }
         printf("%s\n", raw_string(rule->match));
@@ -438,14 +438,14 @@ void dump_parser() {
     Str* str;
     StrListIter* sli;
 
-    sli = init_str_list_iter(parser_state->headers);
+    sli = init_string_list_iterator(parser_state->headers);
     printf("HEADERS:\n");
-    while(NULL != (str = iterate_str_list(sli)))
+    while(NULL != (str = iterate_string_list(sli)))
         printf("%s\n", raw_string(str));
 
-    sli = init_str_list_iter(parser_state->sources);
+    sli = init_string_list_iterator(parser_state->sources);
     printf("\nSOURCES:\n");
-    while(NULL != (str = iterate_str_list(sli)))
+    while(NULL != (str = iterate_string_list(sli)))
         printf("%s\n", raw_string(str));
 
     Terminal* term;
@@ -495,7 +495,7 @@ static void increment_reference(Str* str) {
     while(NULL != (term = iterate_term_list(tli))) {
         if(!comp_string(term->name, str)) {
             term->ref++;
-            LOG(PLEVEL, "LEAVE: increment references: %s", raw_string(term->name));
+            LOG(PLEVEL, "LEAVE: increment term references: %s", raw_string(term->name));
             return;
         }
     }
@@ -505,7 +505,7 @@ static void increment_reference(Str* str) {
     while(NULL != (nterm = iterate_nterm_list(ntli))) {
         if(!comp_string(nterm->name, str)) {
             nterm->ref++;
-            LOG(PLEVEL, "LEAVE: increment references: %s", raw_string(nterm->name));
+            LOG(PLEVEL, "LEAVE: increment nterm references: %s", raw_string(nterm->name));
             return;
         }
     }
@@ -528,8 +528,8 @@ static void update_references() {
         RuleListIter* rli = init_rule_list_iter(nterm->list);
         while(NULL != (rule = iterate_rule_list(rli))) {
             Str* str;
-            StrListIter* sli = init_str_list_iter(rule->list);
-            while(NULL != (str = iterate_str_list(sli))) {
+            StrListIter* sli = init_string_list_iterator(rule->list);
+            while(NULL != (str = iterate_string_list(sli))) {
                 increment_reference(str);
             }
         }
@@ -576,16 +576,16 @@ void init_parser() {
 
     parser_state->terminals     = create_term_list();
     parser_state->non_terminals = create_nterm_list();
-    parser_state->headers       = create_str_list();
-    parser_state->sources       = create_str_list();
+    parser_state->headers       = create_string_list();
+    parser_state->sources       = create_string_list();
 }
 
 void destroy_parser() {
 
     destroy_term_list(parser_state->terminals);
     destroy_nterm_list(parser_state->non_terminals);
-    destroy_str_list(parser_state->headers);
-    destroy_str_list(parser_state->sources);
+    destroy_string_list(parser_state->headers);
+    destroy_string_list(parser_state->sources);
     _FREE(parser_state);
 }
 
@@ -637,11 +637,11 @@ Parser* parser() {
 }
 
 int get_num_term() {
-    return len_list(parser_state->terminals);
+    return length_list(parser_state->terminals);
 }
 
 int get_num_nterm() {
-    return len_list(parser_state->non_terminals);
+    return length_list(parser_state->non_terminals);
 }
 
 TermList* get_term_list() {

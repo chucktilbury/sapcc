@@ -4,5 +4,8 @@
         "oldcap",
         "oldtab",
         "Wextra"
-    ]
+    ],
+    "files.associations": {
+        "limits.h": "c"
+    }
 }
