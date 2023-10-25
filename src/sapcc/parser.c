@@ -3,14 +3,14 @@
 #include "errors.h"
 #include "logger.h"
 
-#define PLEVEL 10
+#define PLEVEL 20
 static Parser* parser_state;
 
 static Rule* create_rule() {
 
-    Rule* ptr  = _ALLOC_T(Rule);
+    Rule* ptr = _ALLOC_T(Rule);
     ptr->match = create_string(NULL);
-    ptr->list  = create_string_list();
+    ptr->list = create_string_list();
 
     return ptr;
 }
@@ -65,12 +65,12 @@ static NonTerminal* create_nonterminal() {
 
     NonTerminal* ptr = _ALLOC_T(NonTerminal);
 
-    ptr->name       = create_string(NULL);
-    ptr->pre_match  = create_string(NULL);
+    ptr->name = create_string(NULL);
+    ptr->pre_match = create_string(NULL);
     ptr->post_match = create_string(NULL);
-    ptr->list       = create_rule_list();
-    ptr->ref        = 0;
-    ptr->val        = 0;
+    ptr->list = create_rule_list();
+    ptr->ref = 0;
+    ptr->val = 0;
 
     return ptr;
 }
@@ -126,10 +126,10 @@ static void destroy_nterm_list(NonTermList* ptr) {
 static Terminal* create_terminal() {
 
     Terminal* ptr = _ALLOC_T(Terminal);
-    ptr->name     = create_string(NULL);
-    ptr->keep     = false;
-    ptr->ref      = 0;
-    ptr->val      = 0;
+    ptr->name = create_string(NULL);
+    ptr->keep = false;
+    ptr->ref = 0;
+    ptr->val = 0;
 
     return ptr;
 }
@@ -211,7 +211,7 @@ static int parse_source() {
 static int parse_tokens() {
 
     Token* tok = get_token();
-    int value  = 500;
+    int value = 500;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
@@ -229,8 +229,8 @@ static int parse_tokens() {
                 term->keep = true;
             }
             term->name = copy_string(tok->str);
-            term->ref  = 0;
-            term->val  = value++;
+            term->ref = 0;
+            term->val = value++;
             add_term_list(parser_state->terminals, term);
             consume_token();
         }
@@ -239,7 +239,8 @@ static int parse_tokens() {
             return 0;
         }
         else {
-            syntax_error("expected a terminal SYMBOL or a '}', but got a %s", tok_type_to_str(tok->type));
+            syntax_error("expected a terminal SYMBOL or a '}', but got a %s",
+                         tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -266,7 +267,8 @@ static int parse_rule(NonTerminal* nterm) {
             scan_block();
             tok = get_token();
             if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s", tok_type_to_str(tok->type));
+                syntax_error("expected a code BLOCK, but got a %s",
+                             tok_type_to_str(tok->type));
                 consume_token();
                 return 1;
             }
@@ -278,7 +280,8 @@ static int parse_rule(NonTerminal* nterm) {
             return 0;
         }
         else {
-            syntax_error("expected a rule SYMBOL or a code BLOCK, but got a %s", tok_type_to_str(tok->type));
+            syntax_error("expected a rule SYMBOL or a code BLOCK, but got a %s",
+                         tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -308,7 +311,8 @@ static int parse_rules(NonTerminal* nterm) {
             scan_block();
             tok = get_token();
             if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s", tok_type_to_str(tok->type));
+                syntax_error("expected a code BLOCK, but got a %s",
+                             tok_type_to_str(tok->type));
                 consume_token();
                 return 1;
             }
@@ -319,7 +323,8 @@ static int parse_rules(NonTerminal* nterm) {
             return 0;
         }
         else {
-            syntax_error("expected a ':' or a ';', but got a %s", tok_type_to_str(tok->type));
+            syntax_error("expected a ':' or a ';', but got a %s",
+                         tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -345,7 +350,7 @@ static int parse_rules(NonTerminal* nterm) {
 static int parse_grammar() {
 
     Token* tok = get_token();
-    int value  = 1000;
+    int value = 1000;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
@@ -358,13 +363,14 @@ static int parse_grammar() {
         tok = get_token();
         if(tok->type == SYMBOL) {
             NonTerminal* ptr = create_nonterminal();
-            ptr->name        = copy_string(tok->str);
+            ptr->name = copy_string(tok->str);
             consume_token();
 
             scan_block();
             tok = get_token();
             if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s", tok_type_to_str(tok->type));
+                syntax_error("expected a code BLOCK, but got a %s",
+                             tok_type_to_str(tok->type));
                 consume_token();
                 return 1;
             }
@@ -388,7 +394,9 @@ static int parse_grammar() {
             return 0;
         }
         else {
-            syntax_error("expected a non-terminal SYMBOL or a '}', but got a %s", tok_type_to_str(tok->type));
+            syntax_error("expected a non-terminal SYMBOL or a '}', but got a "
+                         "%s",
+                         tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -475,7 +483,8 @@ static void check_duplicates() {
         NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
         while(NULL != (nterm = iterate_nterm_list(ntli))) {
             if(!comp_string(term->name, nterm->name)) {
-                fprintf(stderr, "Syntax Error: terminal and non-terminal have the same name: %s", raw_string(term->name));
+                fprintf(stderr, "Syntax Error: terminal and non-terminal have the same name: %s",
+                        raw_string(term->name));
                 return;
             }
         }
@@ -505,7 +514,8 @@ static void increment_reference(Str* str) {
     while(NULL != (nterm = iterate_nterm_list(ntli))) {
         if(!comp_string(nterm->name, str)) {
             nterm->ref++;
-            LOG(PLEVEL, "LEAVE: increment nterm references: %s", raw_string(nterm->name));
+            LOG(PLEVEL, "LEAVE: increment nterm references: %s",
+                raw_string(nterm->name));
             return;
         }
     }
@@ -551,7 +561,8 @@ static void check_references() {
     TermListIter* tli = init_term_list_iter(parser_state->terminals);
     while(NULL != (term = iterate_term_list(tli))) {
         if(term->ref == 0)
-            warning("terminal symbol \"%s\" has no references in grammar", raw_string(term->name));
+            warning("terminal symbol \"%s\" has no references in grammar",
+                    raw_string(term->name));
     }
 
     NonTerminal* nterm;
@@ -560,7 +571,8 @@ static void check_references() {
     iterate_nterm_list(ntli);
     while(NULL != (nterm = iterate_nterm_list(ntli))) {
         if(nterm->ref == 0)
-            warning("non-terminal symbol \"%s\" has no references in grammar", raw_string(nterm->name));
+            warning("non-terminal symbol \"%s\" has no references in grammar",
+                    raw_string(nterm->name));
     }
     LOG(PLEVEL, "ENTER: check references");
 }
@@ -574,10 +586,10 @@ void init_parser() {
 
     init_scanner(get_cmd_raw(cmd, "file"));
 
-    parser_state->terminals     = create_term_list();
+    parser_state->terminals = create_term_list();
     parser_state->non_terminals = create_nterm_list();
-    parser_state->headers       = create_string_list();
-    parser_state->sources       = create_string_list();
+    parser_state->headers = create_string_list();
+    parser_state->sources = create_string_list();
 }
 
 void destroy_parser() {
@@ -619,7 +631,8 @@ Parser* parser() {
                 // do nothing...
                 break;
             default:
-                syntax_error("expected a directive but got a %s", tok_type_to_str(tok->type));
+                syntax_error("expected a directive but got a %s",
+                             tok_type_to_str(tok->type));
                 consume_token();
                 errors++;
                 break;

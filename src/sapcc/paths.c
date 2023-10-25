@@ -1,8 +1,10 @@
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
 #include <limits.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/sysmacros.h>
+#include <fcntl.h>
+
 #include "paths.h"
 
 // returns everything after the last '/' or '\\', depending on the OS.
@@ -56,7 +58,7 @@ bool path_exists(Str* name) {
 
     struct stat statbuf;
 
-    if(! stat(raw_string(name), &statbuf))
+    if(!stat(raw_string(name), &statbuf))
         return true;
     else
         return false;
@@ -67,7 +69,7 @@ bool path_isfile(Str* name) {
 
     struct stat statbuf;
 
-    if(! stat(raw_string(name), &statbuf))
+    if(!stat(raw_string(name), &statbuf))
         if((statbuf.st_mode & S_IFMT) == S_IFREG)
             return true;
 
@@ -79,7 +81,7 @@ bool path_isdir(Str* name) {
 
     struct stat statbuf;
 
-    if(! stat(raw_string(name), &statbuf))
+    if(!stat(raw_string(name), &statbuf))
         if((statbuf.st_mode & S_IFMT) == S_IFDIR)
             return true;
 
@@ -111,7 +113,7 @@ StrList* path_split(Str* names) {
 
     char* str = _DUP_STR(raw_string(names));
     StrList* lst = create_string_list();
-    char* head = str, *tail;
+    char *head = str, *tail;
 
     tail = strchr(head, '/');
     if(tail != NULL) {
@@ -163,4 +165,3 @@ Str* path_stripext(Str* name) {
 
     return s;
 }
-

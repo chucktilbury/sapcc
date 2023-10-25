@@ -6,6 +6,11 @@
         "Wextra"
     ],
     "files.associations": {
-        "limits.h": "c"
-    }
+        "limits.h": "c",
+        "sysmacros.h": "c",
+        "stat.h": "c",
+        "syslimits.h": "c",
+        "ranges": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

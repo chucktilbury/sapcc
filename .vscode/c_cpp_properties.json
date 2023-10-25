@@ -6,9 +6,14 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/src/util"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "intelliSenseMode": "linux-clang-x64"
+            "defines": [
+                "ENABLE_DUMP",
+                "ENABLE_LOGGER"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "intelliSenseMode": "linux-gcc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
         }
     ],
     "version": 4
