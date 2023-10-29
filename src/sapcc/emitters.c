@@ -69,9 +69,7 @@ static FILE* source_pre(const char* name) {
     return fp;
 }
 
-
-
-void init_emitters(Parser* pstate) {
+static void init_emitters(Parser* pstate) {
 
     emitters = _ALLOC_T(Emitters);
     emitters->pstate = pstate;
@@ -89,7 +87,7 @@ void init_emitters(Parser* pstate) {
     LOG(ELEVEL, "using the output name: %s\n", raw_string(emitters->base));
 }
 
-void emit_scanner_h() {
+static void emit_scanner_h() {
 
     FILE* fp = header_pre("_scanner");
 
@@ -97,7 +95,7 @@ void emit_scanner_h() {
     TermListIter* tli = init_list_iterator(emitters->pstate->terminals);
     fprintf(fp, "typedef enum {\n");
     while(iterate_list(tli, &term))
-        fprintf(fp, "    %s = %d,\n", raw_string(term->name), term->val);
+        fprintf(fp, "    _TOK_%s = %d,\n", raw_string(term->name), term->val);
     fprintf(fp, "} TokenType;\n\n");
 
     fprintf(fp, "typedef struct {\n");
@@ -107,6 +105,7 @@ void emit_scanner_h() {
 
     fprintf(fp, "extern Token token;\n\n");
 
+    fprintf(fp, "/*\n    Public Interface.\n */\n");
     fprintf(fp, "Token* create_token();\n");
     fprintf(fp, "void open_file(const char* fname);\n");
     fprintf(fp, "Token* get_token();\n");
@@ -116,37 +115,124 @@ void emit_scanner_h() {
     header_post(fp);
 }
 
-void emit_parser_c() {
+static bool is_a_terminal(Str* str) {
+
+    Terminal* term;
+    TermListIter* tli = init_list_iterator(emitters->pstate->terminals);
+    while(iterate_list(tli, &term))
+        if(!comp_string(term->name, str))
+            return true;
+
+    return false;
+}
+
+static void emit_name(FILE* fp, Str* str) {
+
+    if(is_a_terminal(str))
+        fprintf(fp, "_TOK_%s", raw_string(str));
+    else
+        fprintf(fp, "_nterm_%s", raw_string(str));
+}
+
+static int get_rule_size(NonTerminal* nterm) {
+
+    int value = 3;
+
+    Rule* rule;
+    RuleListIter* riter = init_list_iterator(nterm->list);
+    while(iterate_list(riter, &rule))
+        value += length_list(rule->list)+1;
+
+    return value;
+}
+
+static void emit_rule_list(FILE* fp, NonTermList* list) {
+
+    NonTerminal* nterm;
+    NonTermListIter* ntiter = init_list_iterator(list);
+    while(iterate_list(ntiter, &nterm)) {
+        fprintf(fp, ",\n\n    %d,\n", get_rule_size(nterm));
+        fprintf(fp, "    _nterm_%s,\n", raw_string(nterm->name));
+        fprintf(fp, "    %d", length_list(nterm->list));
+
+        Rule* rule;
+        RuleListIter* riter = init_list_iterator(nterm->list);
+        while(iterate_list(riter, &rule)) {
+            Str* str;
+            StrListIter* siter = init_list_iterator(rule->list);
+
+            iterate_list(siter, &str);
+            fprintf(fp, ",\n        %d, ", length_list(rule->list));
+            emit_name(fp, str);
+
+            while(iterate_list(siter, &str)) {
+                fprintf(fp, ", ");
+                emit_name(fp, str);
+            }
+        }
+    }
+}
+
+static void emit_rule_table(FILE* fp) {
+
+    fprintf(fp, "// parser table encoding\n");
+
+    fprintf(fp, "static uint16_t parser_table[] = {\n");
+    fprintf(fp, "    %d", length_list(emitters->pstate->non_terminals));
+    emit_rule_list(fp, emitters->pstate->non_terminals);
+    fprintf(fp, "\n};\n\n");
+}
+
+#include "emit_parser.h"
+
+static void emit_parser_c() {
 
     FILE* fp = source_pre("_parser");
+
+    NonTerminal* nterm;
+    NonTermListIter* ntli = init_list_iterator(emitters->pstate->non_terminals);
+    fprintf(fp, "typedef enum {\n");
+    while(iterate_list(ntli, &nterm))
+        fprintf(fp, "    _nterm_%s = %d,\n", raw_string(nterm->name), nterm->val);
+    fprintf(fp, "} NonTerminalType;\n\n");
+
+    fprintf(fp, "#include \"%s_parser.h\"\n", raw_string(emitters->base));
+    fprintf(fp, "#include \"%s_scanner.h\"\n\n", raw_string(emitters->base));
+    emit_rule_table(fp);
+    fprintf(fp, parser_finder_string);
+    //fprintf(fp, parser_testing_string);
+
     source_post(fp);
 }
 
-void emit_parser_h() {
+static void emit_parser_h() {
 
     FILE* fp = header_pre("_parser");
+
+    fprintf(fp, "void* parser();\n\n");
+
     header_post(fp);
 }
 
-void emit_ast_c() {
+static void emit_ast_c() {
 
     FILE* fp = source_pre("_ast");
     source_post(fp);
 }
 
-void emit_ast_h() {
+static void emit_ast_h() {
 
     FILE* fp = header_pre("_ast");
     header_post(fp);
 }
 
-void emit_visitor_c() {
+static void emit_visitor_c() {
 
     FILE* fp = source_pre("_visitor");
     source_post(fp);
 }
 
-void emit_visitor_h() {
+static void emit_visitor_h() {
 
     FILE* fp = header_pre("_visitor");
     header_post(fp);

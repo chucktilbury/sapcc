@@ -86,4 +86,5 @@ fi
 
 echo $1
 
-cmake -D CMAKE_C_COMPILER=gcc -D CMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=$_BUILD_TYPE -G "Kate - Unix Makefiles" ..
+#cmake -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang -DCMAKE_BUILD_TYPE=$_BUILD_TYPE -G "Kate - Unix Makefiles" ..
+cmake -D CMAKE_C_COMPILER=gcc -D CMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=$_BUILD_TYPE ..

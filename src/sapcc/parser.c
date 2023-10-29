@@ -262,6 +262,7 @@ static int parse_rule(NonTerminal* nterm) {
         if(tok->type == SYMBOL) {
             add_string_list(rule->list, copy_string(tok->str));
             consume_token();
+            // add_rule_list(nterm->list, rule);
         }
         else if(tok->type == OBRACE) {
             scan_block();
@@ -376,8 +377,8 @@ static int parse_grammar() {
             }
             else
                 ptr->pre_match = copy_string(tok->str);
-
             consume_token();
+
             // get the rule list, including the closure.
             if(parse_rules(ptr)) {
                 return 1;
