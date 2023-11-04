@@ -20,10 +20,14 @@ Str* path_basename(Str* name) {
     char* tpt = strrchr(str, '\\');
 #endif
 
-    if(tpt != NULL)
+    Str* s;
+    if(tpt != NULL) {
         tpt++;
+        s = create_string(tpt);
+    }
+    else
+        s = copy_string(name);
 
-    Str* s = create_string(tpt);
     _FREE(str);
 
     return s;

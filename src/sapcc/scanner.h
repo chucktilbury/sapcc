@@ -14,6 +14,7 @@ typedef enum {
     HEADER,       // the %header keyword
     BLOCK,        // a generic '{'.*'}' block
     SYMBOL,       // a generic name: [a-zA-Z][a-zA-Z0-9]*
+    NUMBER,       // a generic number: [0-9]*
     COLON,        // a ':' character
     SEMI,         // a ';' character
     OBRACE,       // a '{'

@@ -16,11 +16,12 @@ const char* parser_finder_string =
     "typedef struct _rule_ {\n" \
     "    uint16_t size;       // the non-terminal value\n" \
     "    uint16_t type;       // the non-terminal value\n" \
+    "    uint16_t prec;       // rule precedence\n" \
     "    uint16_t num_lines;  // number of rule lines\n" \
     "    RuleLine** list;     // list of lines in the rule\n" \
     "} Rule;\n" \
     "\n" \
-    "uint16_t* find_rule(uint16_t type) {\n" \
+    "static uint16_t* find_rule(uint16_t type) {\n" \
     "\n" \
     "    uint16_t* tmp;\n" \
     "    int idx = 1;\n" \
@@ -36,7 +37,7 @@ const char* parser_finder_string =
     "    return NULL;\n" \
     "}\n" \
     "\n" \
-    "RuleLine* get_line(uint16_t* table) {\n" \
+    "static RuleLine* get_line(uint16_t* table) {\n" \
     "\n" \
     "    RuleLine* ptr = _ALLOC_T(RuleLine);\n" \
     "    ptr->len = table[0];\n" \
@@ -46,7 +47,7 @@ const char* parser_finder_string =
     "    return ptr;\n" \
     "}\n" \
     "\n" \
-    "Rule* get_rule(uint16_t type) {\n" \
+    "static Rule* get_rule(uint16_t type) {\n" \
     "\n" \
     "    uint16_t* tmp = find_rule(type);\n" \
     "    Rule* ptr;\n" \
@@ -55,9 +56,9 @@ const char* parser_finder_string =
     "        return NULL;\n" \
     "    else {\n" \
     "        ptr = _DUP_MEM_ARRAY(tmp, Rule, tmp[0]);\n" \
-    "        ptr->list = _ALLOC_ARRAY(RuleLine*, tmp[2]); //malloc(sizeof(uint16_t*)*tmp[2]);\n" \
-    "        uint16_t* index = &tmp[3];\n" \
-    "        for(uint16_t i = 0; i < tmp[2]; i++) {\n" \
+    "        ptr->list = _ALLOC_ARRAY(RuleLine*, tmp[3]);\n" \
+    "        uint16_t* index = &tmp[4];\n" \
+    "        for(uint16_t i = 0; i < tmp[3]; i++) {\n" \
     "            ptr->list[i] = get_line(index);\n" \
     "            index += index[0]+1;\n" \
     "        }\n" \
@@ -71,7 +72,7 @@ const char* parser_testing_string =
     "#if 1\n" \
     "// build string:\n" \
     "// gcc -Wall -Wextra -Wpedantic -o t simple_parser.c -I../src/util -L../bin -lutil -lgc\n" \
-    "void dump_line(RuleLine* line) {\n" \
+    "static void dump_line(RuleLine* line) {\n" \
     "\n" \
     "    printf(\"    len: %%d\\n\", line->len);\n" \
     "    int idx = 0;\n" \
@@ -83,10 +84,11 @@ const char* parser_testing_string =
     "    printf(\"\\n\");\n" \
     "}\n" \
     "\n" \
-    "void dump_rule(Rule* ptr) {\n" \
+    "static void dump_rule(Rule* ptr) {\n" \
     "\n" \
     "    printf(\"size: %%u\\n\", ptr->size);\n" \
     "    printf(\"type: %%u\\n\", ptr->type);\n" \
+    "    printf(\"prec: %%u\\n\", ptr->prec);\n" \
     "    printf(\"lines: %%u\\n\", ptr->num_lines);\n" \
     "    for(unsigned int i = 0; i < ptr->num_lines; i++)\n" \
     "        dump_line(ptr->list[i]);\n" \
@@ -95,13 +97,13 @@ const char* parser_testing_string =
     "\n" \
     "int main() {\n" \
     "\n" \
-    "    Rule* ptr = (Rule*)get_rule(_nterm_switch_clause);\n" \
+    "    Rule* ptr = (Rule*)get_rule(1001);\n" \
     "    dump_rule(ptr);\n" \
     "\n" \
-    "    ptr = (Rule*)get_rule(_nterm_func_content_elem);\n" \
+    "    ptr = (Rule*)get_rule(1003);\n" \
     "    dump_rule(ptr);\n" \
     "\n" \
-    "    ptr = (Rule*)get_rule(_nterm_entry_definition);\n" \
+    "    ptr = (Rule*)get_rule(1006);\n" \
     "    dump_rule(ptr);\n" \
     "\n" \
     "    ptr = (Rule*)get_rule(8012);\n" \

@@ -78,11 +78,24 @@ static void eat_comment() {
         consume_scanner_char();
 }
 
+static void get_number() {
+
+    int ch = get_scanner_char();
+
+    while(isdigit(ch) && ch != EOF) {
+        add_string_char(scanner_state->token->str, ch);
+        consume_scanner_char();
+        ch = get_scanner_char();
+    }
+
+    scanner_state->token->type = NUMBER;
+}
+
 static void get_word() {
 
     int ch = get_scanner_char();
 
-    while(!isspace(ch) && ch != EOF) {
+    while((isalnum(ch) || ch == '_' || ch == '@') && ch != EOF) {
         add_string_char(scanner_state->token->str, ch);
         consume_scanner_char();
         ch = get_scanner_char();
@@ -163,6 +176,8 @@ void consume_token() {
                 finished++;
                 break;
             case '%':
+                add_string_char(scanner_state->token->str, ch);
+                consume_scanner_char();
                 get_keyword();
                 finished++;
                 break;
@@ -190,8 +205,12 @@ void consume_token() {
             default:
                 if(isspace(ch))
                     consume_scanner_char();
-                else if(isalnum(ch)) {
+                else if(isalpha(ch)) {
                     get_symbol();
+                    finished++;
+                }
+                else if(isdigit(ch)) {
+                    get_number();
                     finished++;
                 }
                 else {

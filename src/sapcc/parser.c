@@ -9,7 +9,6 @@ static Parser* parser_state;
 static Rule* create_rule() {
 
     Rule* ptr = _ALLOC_T(Rule);
-    ptr->match = create_string(NULL);
     ptr->list = create_string_list();
 
     return ptr;
@@ -18,7 +17,6 @@ static Rule* create_rule() {
 static void destroy_rule(Rule* ptr) {
 
     if(ptr != NULL) {
-        destroy_string(ptr->match);
         destroy_string_list(ptr->list);
         _FREE(ptr);
     }
@@ -66,8 +64,6 @@ static NonTerminal* create_nonterminal() {
     NonTerminal* ptr = _ALLOC_T(NonTerminal);
 
     ptr->name = create_string(NULL);
-    ptr->pre_match = create_string(NULL);
-    ptr->post_match = create_string(NULL);
     ptr->list = create_rule_list();
     ptr->ref = 0;
     ptr->val = 0;
@@ -79,8 +75,6 @@ static void destroy_nonterminal(NonTerminal* ptr) {
 
     if(ptr != NULL) {
         destroy_string(ptr->name);
-        destroy_string(ptr->pre_match);
-        destroy_string(ptr->post_match);
         destroy_rule_list(ptr->list);
         _FREE(ptr);
     }
@@ -262,31 +256,17 @@ static int parse_rule(NonTerminal* nterm) {
         if(tok->type == SYMBOL) {
             add_string_list(rule->list, copy_string(tok->str));
             consume_token();
-            // add_rule_list(nterm->list, rule);
         }
-        else if(tok->type == OBRACE) {
-            scan_block();
-            tok = get_token();
-            if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s",
-                             tok_type_to_str(tok->type));
-                consume_token();
-                return 1;
-            }
-            else
-                rule->match = copy_string(tok->str);
-
-            consume_token(); // consume the block
-            add_rule_list(nterm->list, rule);
-            return 0;
-        }
+        else if(tok->type == COLON || tok->type == CBRACE)
+            break;
         else {
-            syntax_error("expected a rule SYMBOL or a code BLOCK, but got a %s",
+            syntax_error("expected a rule SYMBOL, but got a %s",
                          tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
     }
+    add_rule_list(nterm->list, rule);
 
     return 0;
 }
@@ -298,7 +278,16 @@ static int parse_rule(NonTerminal* nterm) {
  */
 static int parse_rules(NonTerminal* nterm) {
 
-    Token* tok;
+    Token* tok = get_token();
+
+    if(tok->type == OBRACE)
+        consume_token();
+    else {
+        syntax_error("expected a '{', but got a %s",
+                        tok_type_to_str(tok->type));
+        consume_token();
+        return 1;
+    }
 
     while(true) {
         tok = get_token();
@@ -306,25 +295,12 @@ static int parse_rules(NonTerminal* nterm) {
             if(parse_rule(nterm))
                 return 1;
         }
-        else if(tok->type == SEMI) {
-            consume_token(); // consume the semicolon
-
-            scan_block();
-            tok = get_token();
-            if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s",
-                             tok_type_to_str(tok->type));
-                consume_token();
-                return 1;
-            }
-            else
-                nterm->post_match = copy_string(tok->str);
-
-            consume_token(); // consume the block
+        else if(tok->type == CBRACE) {
+            consume_token();
             return 0;
         }
         else {
-            syntax_error("expected a ':' or a ';', but got a %s",
+            syntax_error("expected a ':', but got a %s",
                          tok_type_to_str(tok->type));
             consume_token();
             return 1;
@@ -339,10 +315,9 @@ static int parse_rules(NonTerminal* nterm) {
  * consumed. The next token is a '{'. After that, the nonterminal and the rest
  * of the syntax:
  *
- * nonterminal { // block of C code }
- *    : rule { // block of C code }
+ * nonterminal
+ *    : rule
  *    ...
- *    ; { block of C code }
  *
  * ...
  *
@@ -367,17 +342,21 @@ static int parse_grammar() {
             ptr->name = copy_string(tok->str);
             consume_token();
 
-            scan_block();
-            tok = get_token();
-            if(tok->type != BLOCK) {
-                syntax_error("expected a code BLOCK, but got a %s",
-                             tok_type_to_str(tok->type));
+            // optional precedence number
+            if(tok->type == COLON) {
                 consume_token();
-                return 1;
+                tok = get_token();
+                if(tok->type == NUMBER) {
+                    ptr->prec = strtol(raw_string(tok->str), NULL, 10);
+                    consume_token();
+                }
+                else {
+                    syntax_error("expected a number but got a %s", tok_type_to_str(tok->type));
+                    return 1;
+                }
             }
             else
-                ptr->pre_match = copy_string(tok->str);
-            consume_token();
+                ptr->prec = 0;
 
             // get the rule list, including the closure.
             if(parse_rules(ptr)) {
@@ -392,11 +371,10 @@ static int parse_grammar() {
         }
         else if(tok->type == CBRACE) {
             consume_token();
-            return 0;
+            break;
         }
         else {
-            syntax_error("expected a non-terminal SYMBOL or a '}', but got a "
-                         "%s",
+            syntax_error("expected a non-terminal SYMBOL, but got a %s",
                          tok_type_to_str(tok->type));
             consume_token();
             return 1;
@@ -425,7 +403,7 @@ static void dump_rules(NonTerminal* nterm) {
         while(NULL != (s = iterate_string_list(sli))) {
             printf("%s ", raw_string(s));
         }
-        printf("%s\n", raw_string(rule->match));
+        printf("\n");
     }
 }
 
@@ -434,8 +412,6 @@ static void dump_nonterminal(NonTerminal* nterm) {
     printf("%s\t", raw_string(nterm->name));
     printf("value:%d\t", nterm->val);
     printf("references:%d\n", nterm->ref);
-    printf("\tpre-match: %s\n", raw_string(nterm->pre_match));
-    printf("\tpost-match: %s\n", raw_string(nterm->post_match));
     dump_rules(nterm);
     printf("\n");
 }
@@ -647,6 +623,8 @@ Parser* parser() {
     check_duplicates();
     update_references();
     check_references();
+    // TODO:
+    // Verify that all of the symbols in the rules have been defined.
     return parser_state;
 }
 

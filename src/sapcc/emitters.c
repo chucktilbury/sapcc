@@ -101,6 +101,9 @@ static void emit_scanner_h() {
     fprintf(fp, "typedef struct {\n");
     fprintf(fp, "    Str* str;\n");
     fprintf(fp, "    TokenType type;\n");
+    fprintf(fp, "    int line_no;\n");
+    fprintf(fp, "    int col_no;\n");
+    fprintf(fp, "    Str* fname;\n");
     fprintf(fp, "} Token;\n\n");
 
     fprintf(fp, "extern Token token;\n\n");
@@ -136,7 +139,7 @@ static void emit_name(FILE* fp, Str* str) {
 
 static int get_rule_size(NonTerminal* nterm) {
 
-    int value = 3;
+    int value = 4;
 
     Rule* rule;
     RuleListIter* riter = init_list_iterator(nterm->list);
@@ -153,6 +156,7 @@ static void emit_rule_list(FILE* fp, NonTermList* list) {
     while(iterate_list(ntiter, &nterm)) {
         fprintf(fp, ",\n\n    %d,\n", get_rule_size(nterm));
         fprintf(fp, "    _nterm_%s,\n", raw_string(nterm->name));
+        fprintf(fp, "    %d,\n", nterm->prec);
         fprintf(fp, "    %d", length_list(nterm->list));
 
         Rule* rule;
@@ -200,7 +204,7 @@ static void emit_parser_c() {
     fprintf(fp, "#include \"%s_scanner.h\"\n\n", raw_string(emitters->base));
     emit_rule_table(fp);
     fprintf(fp, parser_finder_string);
-    //fprintf(fp, parser_testing_string);
+    fprintf(fp, parser_testing_string);
 
     source_post(fp);
 }
@@ -214,11 +218,11 @@ static void emit_parser_h() {
     header_post(fp);
 }
 
-static void emit_ast_c() {
+// static void emit_ast_c() {
 
-    FILE* fp = source_pre("_ast");
-    source_post(fp);
-}
+//     FILE* fp = source_pre("_ast");
+//     source_post(fp);
+// }
 
 static void emit_ast_h() {
 
@@ -244,7 +248,7 @@ void emit_all(Parser* pstate) {
     emit_scanner_h();
     emit_parser_c();
     emit_parser_h();
-    emit_ast_c();
+    //emit_ast_c();
     emit_ast_h();
     emit_visitor_c();
     emit_visitor_h();

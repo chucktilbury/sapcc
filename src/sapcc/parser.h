@@ -24,14 +24,12 @@ typedef struct {
 // Rules to match the non-terminal.
 typedef struct {
     StrList* list;
-    Str* match;
 } Rule;
 
 typedef struct {
     Str* name;
     RuleList* list;
-    Str* pre_match;
-    Str* post_match;
+    int prec;
     int ref;
     int val;
 } NonTerminal;
