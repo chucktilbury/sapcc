@@ -36,7 +36,7 @@
     }
 
     primary {
-        : const_expression bacon
+        : const_expression
         : OPAREN expression CPAREN
     }
 

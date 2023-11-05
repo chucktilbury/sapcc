@@ -36,7 +36,7 @@ static FILE* header_pre(const char* name) {
 
     FILE* fp = fopen(buffer, "w");
 
-    p = strrchr(buffer, '.');
+    if(NULL != (p = strrchr(buffer, '.')))
         *p = '_';
 
     opening(fp);
@@ -144,7 +144,7 @@ static int get_rule_size(NonTerminal* nterm) {
     Rule* rule;
     RuleListIter* riter = init_list_iterator(nterm->list);
     while(iterate_list(riter, &rule))
-        value += length_list(rule->list)+1;
+        value += length_list(rule->list) + 1;
 
     return value;
 }
@@ -248,7 +248,7 @@ void emit_all(Parser* pstate) {
     emit_scanner_h();
     emit_parser_c();
     emit_parser_h();
-    //emit_ast_c();
+    // emit_ast_c();
     emit_ast_h();
     emit_visitor_c();
     emit_visitor_h();

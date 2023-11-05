@@ -69,3 +69,10 @@ int get_warnings() {
 
     return warnings;
 }
+
+void increment_errors() {
+    errors++;
+}
+void increment_warnings() {
+    warnings++;
+}

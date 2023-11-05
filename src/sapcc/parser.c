@@ -283,8 +283,7 @@ static int parse_rules(NonTerminal* nterm) {
     if(tok->type == OBRACE)
         consume_token();
     else {
-        syntax_error("expected a '{', but got a %s",
-                        tok_type_to_str(tok->type));
+        syntax_error("expected a '{', but got a %s", tok_type_to_str(tok->type));
         consume_token();
         return 1;
     }
@@ -300,8 +299,7 @@ static int parse_rules(NonTerminal* nterm) {
             return 0;
         }
         else {
-            syntax_error("expected a ':', but got a %s",
-                         tok_type_to_str(tok->type));
+            syntax_error("expected a ':', but got a %s", tok_type_to_str(tok->type));
             consume_token();
             return 1;
         }
@@ -351,12 +349,13 @@ static int parse_grammar() {
                     consume_token();
                 }
                 else {
-                    syntax_error("expected a number but got a %s", tok_type_to_str(tok->type));
+                    syntax_error("expected a number but got a %s",
+                                 tok_type_to_str(tok->type));
                     return 1;
                 }
             }
             else
-                ptr->prec = 0;
+                ptr->prec = 100;
 
             // get the rule list, including the closure.
             if(parse_rules(ptr)) {
@@ -460,8 +459,8 @@ static void check_duplicates() {
         NonTermListIter* ntli = init_nterm_list_iter(parser_state->non_terminals);
         while(NULL != (nterm = iterate_nterm_list(ntli))) {
             if(!comp_string(term->name, nterm->name)) {
-                fprintf(stderr, "Syntax Error: terminal and non-terminal have the same name: %s",
-                        raw_string(term->name));
+                syntax_error("terminal and non-terminal have the same name: %s",
+                             raw_string(term->name));
                 return;
             }
         }
@@ -476,6 +475,7 @@ static void increment_reference(Str* str) {
 
     // Iterate the terminals and the non-terminals and publish a warning if
     // they are not referenced.
+
     Terminal* term;
     TermListIter* tli = init_term_list_iter(parser_state->terminals);
     while(NULL != (term = iterate_term_list(tli))) {
@@ -496,6 +496,8 @@ static void increment_reference(Str* str) {
             return;
         }
     }
+
+    syntax_error("symbol %s is used but has no definition", raw_string(str));
 
     LOG(PLEVEL, "LEAVE: increment references");
 }
@@ -623,8 +625,6 @@ Parser* parser() {
     check_duplicates();
     update_references();
     check_references();
-    // TODO:
-    // Verify that all of the symbols in the rules have been defined.
     return parser_state;
 }
 
