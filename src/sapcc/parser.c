@@ -205,7 +205,7 @@ static int parse_source() {
 static int parse_tokens() {
 
     Token* tok = get_token();
-    int value = 500;
+    int value = BASE_TERM;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));
@@ -324,7 +324,7 @@ static int parse_rules(NonTerminal* nterm) {
 static int parse_grammar() {
 
     Token* tok = get_token();
-    int value = 1000;
+    int value = BASE_NTERM;
 
     if(tok->type != OBRACE) {
         syntax_error("expected a '{' but got a %s", tok_type_to_str(tok->type));

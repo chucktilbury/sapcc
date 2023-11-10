@@ -53,5 +53,7 @@ NonTermList* get_nterm_list();
 
 extern CmdLine cmd;
 
+#define BASE_NTERM 1000
+#define BASE_TERM  500
 
 #endif /* _PARSER_H */

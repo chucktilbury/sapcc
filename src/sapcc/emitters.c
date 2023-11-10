@@ -112,7 +112,11 @@ static void emit_scanner_h() {
     fprintf(fp, "Token* create_token();\n");
     fprintf(fp, "void open_file(const char* fname);\n");
     fprintf(fp, "Token* get_token();\n");
+    fprintf(fp, "void unget_token(Token* tok);\n");
     fprintf(fp, "void consume_token();\n");
+    fprintf(fp, "int get_line_no();\n");
+    fprintf(fp, "int get_col_no();\n");
+    fprintf(fp, "const char* get_fname();\n");
     fprintf(fp, "const char* tok_to_str(TokenType type);\n\n");
 
     header_post(fp);
@@ -201,8 +205,29 @@ static void emit_parser_c() {
     fprintf(fp, "} NonTerminalType;\n\n");
 
     fprintf(fp, "#include \"%s_parser.h\"\n", raw_string(emitters->base));
-    fprintf(fp, "#include \"%s_scanner.h\"\n\n", raw_string(emitters->base));
+    fprintf(fp, "#include \"%s_scanner.h\"\n", raw_string(emitters->base));
+    fprintf(fp, "#include \"%s_ast.h\"\n\n", raw_string(emitters->base));
+
+    fprintf(fp, "#define BASE_TERM %d\n", BASE_TERM);
+    fprintf(fp, "#define BASE_NTERM %d\n\n", BASE_NTERM);
+
     emit_rule_table(fp);
+
+    fprintf(fp, data_structures_string);
+
+    fprintf(fp, "static const char* nterm_to_str(uint16_t type) {\n");
+    ntli = init_list_iterator(emitters->pstate->non_terminals);
+    iterate_list(ntli, &nterm);
+    const char* name = raw_string(nterm->name);
+    fprintf(fp, "    return (type == _nterm_%s)? \"%s\" :\n", name, name);
+    while(iterate_list(ntli, &nterm)) {
+        name = raw_string(nterm->name);
+        fprintf(fp, "        (type == _nterm_%s)? \"%s\" :\n", name, name);
+    }
+    fprintf(fp, "                \"UNKNOWN\";\n");
+    fprintf(fp, "}\n");
+
+    fprintf(fp, errors_string);
     fprintf(fp, parser_finder_string);
     fprintf(fp, parser_testing_string);
 
@@ -218,15 +243,40 @@ static void emit_parser_h() {
     header_post(fp);
 }
 
-// static void emit_ast_c() {
+static void emit_ast_c() {
 
-//     FILE* fp = source_pre("_ast");
-//     source_post(fp);
-// }
+    FILE* fp = source_pre("_ast");
+    fprintf(fp, "#include \"%s_ast.h\"\n\n", raw_string(emitters->base));
+    fprintf(fp, "Ast* create_ast_node(uint16_t type, List* lst) {\n\n");
+    fprintf(fp, "    Ast* ptr = _ALLOC_T(Ast);\n");
+    fprintf(fp, "    ptr->type = type;\n");
+    fprintf(fp, "    ptr->attr_list = lst;\n\n");
+    fprintf(fp, "    return ptr;\n");
+    fprintf(fp, "}\n\n");
+    fprintf(fp, "void add_ast_attr(Ast* ast, AstEntry* attr) {\n");
+    fprintf(fp, "    append_list(ast->attr_list, (void*)attr);\n");
+    fprintf(fp, "}\n\n");
+    source_post(fp);
+}
 
 static void emit_ast_h() {
 
     FILE* fp = header_pre("_ast");
+    fprintf(fp, "#include \"util.h\"\n\n");
+    fprintf(fp, "typedef enum {\n");
+    fprintf(fp, "    AST_NTERM,\n");
+    fprintf(fp, "    AST_TERM,\n");
+    fprintf(fp, "} AstType;\n\n");
+    fprintf(fp, "typedef struct {\n");
+    fprintf(fp, "    uint16_t type;\n");
+    fprintf(fp, "    List* attr_list;\n");
+    fprintf(fp, "} Ast;\n\n");
+    fprintf(fp, "typedef struct {\n");
+    fprintf(fp, "    AstType type;\n");
+    fprintf(fp, "    void* value;\n");
+    fprintf(fp, "} AstEntry;\n\n");
+    fprintf(fp, "Ast* create_ast_node(uint16_t type, List* lst);\n");
+    fprintf(fp, "void add_ast_attr(Ast* ast, AstEntry* attr);\n\n");
     header_post(fp);
 }
 
@@ -248,7 +298,7 @@ void emit_all(Parser* pstate) {
     emit_scanner_h();
     emit_parser_c();
     emit_parser_h();
-    // emit_ast_c();
+    emit_ast_c();
     emit_ast_h();
     emit_visitor_c();
     emit_visitor_h();
