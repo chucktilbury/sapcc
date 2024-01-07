@@ -1,9 +1,6 @@
 
 project(sapcc)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} 
-    ./
-)
 
 add_executable(${PROJECT_NAME}
     errors.c
@@ -12,14 +9,6 @@ add_executable(${PROJECT_NAME}
     emitters.c
     paths.c
     main.c
-)
-
-target_include_directories(${PROJECT_NAME}
-    PUBLIC
-        ${PROJECT_SOURCE_DIR}/
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR}/../util
-        ${PROJECT_SOURCE_DIR}/../bdwgc/include
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -34,6 +23,8 @@ target_compile_options(${PROJECT_NAME}
         -Wextra
         -Wpedantic
         -DUSE_GC
+        -I${PROJECT_SOURCE_DIR}/../util
+        -I${PROJECT_SOURCE_DIR}/../bdwgc/include
         $<$<CONFIG:DEBUG>:-g >
         $<$<CONFIG:DEBUG>:-DENABLE_LOGGER >
         $<$<CONFIG:DEBUG>:-DENABLE_DUMP >
