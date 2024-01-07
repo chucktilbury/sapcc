@@ -1,7 +1,9 @@
 
 project(sapcc)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ./)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} 
+    ./
+)
 
 add_executable(${PROJECT_NAME}
     errors.c
@@ -17,6 +19,7 @@ target_include_directories(${PROJECT_NAME}
         ${PROJECT_SOURCE_DIR}/
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/../util
+        ${PROJECT_SOURCE_DIR}/../bdwgc/include
 )
 
 target_link_libraries(${PROJECT_NAME}
