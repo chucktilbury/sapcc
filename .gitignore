@@ -1,6 +1,7 @@
 
 build/
 bin/
+docs/out/
 
 # Prerequisites
 *.d
