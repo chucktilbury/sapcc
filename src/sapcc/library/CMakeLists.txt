@@ -1,19 +1,11 @@
+cmake_minimum_required(VERSION 3.10)
+project(libsapcc)
 
-project(sapcc)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
-add_executable(${PROJECT_NAME}
-    errors.c
-    scanner.c
-    parser.c
-    emitters.c
-    paths.c
-    main.c
-)
-
-target_link_libraries(${PROJECT_NAME}
-    pthread
-    util
-    gc
+add_library(${PROJECT_NAME} STATIC
+    library.c
+    tok_queue.c
 )
 
 target_compile_options(${PROJECT_NAME}
@@ -25,8 +17,8 @@ target_compile_options(${PROJECT_NAME}
         -I${PROJECT_SOURCE_DIR}/../util
         -I${PROJECT_SOURCE_DIR}/../bdwgc/include
         $<$<CONFIG:DEBUG>:-g >
-        $<$<CONFIG:DEBUG>:-DENABLE_LOGGER >
-        $<$<CONFIG:DEBUG>:-DENABLE_DUMP >
+        $<$<CONFIG:DEBUG>:-DMEMORY_DEBUG >
+        $<$<CONFIG:DEBUG>:-DENA_TRACE >
         $<$<CONFIG:RELEASE>:-Ofast >
         $<$<CONFIG:PROFILE>:-pg -O0 >
 )
