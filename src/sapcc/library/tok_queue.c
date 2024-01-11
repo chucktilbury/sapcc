@@ -15,6 +15,8 @@
 #include "util.h"
 #include "scanner.h"
 
+extern Token* scan_token();
+
 typedef struct _tok_queue_item_ {
     Token* tok;
     struct _tok_queue_item_* next;

@@ -5,7 +5,7 @@ source $HOME/.bashrc
 
 # Set up the project location and name
 export _PROJECT_NAME=sapcc
-export _PROJECT_LOC=$HOME/Src/$_PROJECT_NAME
+export _PROJECT_LOC=$HOME/src/$_PROJECT_NAME
 
 # make some GIT shortcuts
 function status {

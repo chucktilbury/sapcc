@@ -30,7 +30,7 @@ extern Token token;
 Token* create_token();
 void open_file(const char* fname);
 Token* get_token();
-void unget_token(Token* tok);
+void unconsume_token(Token* tok);
 void consume_token();
 int get_line_no();
 int get_col_no();

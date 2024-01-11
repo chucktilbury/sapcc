@@ -43,7 +43,7 @@ typedef struct {
     TokenType type; // Type of the token
     int line_no;    // Line number where the token was recognized
     int col_no;     // Column of the last character of the token
-    Str* fname;     // File name where the token was taken 
+    const char* fname;  // File name where the token was taken 
 } Token;
 
 /**
